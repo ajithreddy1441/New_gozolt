@@ -1,19 +1,194 @@
-import React, { useState } from 'react';
-import { Users, Cog, Snowflake, Luggage, Check, Info, ChevronDown, Search } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  MapPin, Search, ChevronUp, Car, Users, Settings, CreditCard, Euro, 
+  Building2, Filter, X, ChevronDown, Plane, Fuel, Navigation, Umbrella, 
+  Route, Ban, UserPlus, Coins 
+} from 'lucide-react';
 
-const CarRentalCards = () => {
-  const [showPickupCalendar, setShowPickupCalendar] = useState(false);
-  const [showDropoffCalendar, setShowDropoffCalendar] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
+const CarRentalPage = () => {
+  // --- State for Search Component ---
+  const [selectedLocation, setSelectedLocation] = useState('Malta International Airport');
   const [selectedDates, setSelectedDates] = useState({
     pickupDate: '',
     dropoffDate: '',
     time: ''
   });
-  const [selectedLocation, setSelectedLocation] = useState('Malta International Airport');
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+
+  // --- State for Map ---
+  const [selectedMapLocation, setSelectedMapLocation] = useState(null);
+  const mapRef = useRef(null);
+  const [mapDimensions, setMapDimensions] = useState({ width: 280, height: 200 });
+
+  // --- Mobile/Tablet Filter State ---
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [expandedMobileSection, setExpandedMobileSection] = useState(null);
+
+  const rentalLocations = [
+    { id: 1, name: "Moha International Airport", lat: 32, lng: 45, available: 15 },
+    { id: 2, name: "City Center", lat: 28, lng: 52, available: 8 },
+    { id: 3, name: "Downtown Station", lat: 35, lng: 48, available: 12 },
+    { id: 4, name: "Beach Resort Area", lat: 25, lng: 55, available: 6 },
+    { id: 5, name: "Business District", lat: 38, lng: 42, available: 20 }
+  ];
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (mapRef.current) {
+        const rect = mapRef.current.getBoundingClientRect();
+        setMapDimensions({ width: rect.width, height: rect.height });
+      }
+    };
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  const handleMapLocationClick = (location) => {
+    setSelectedMapLocation(location);
+  };
+
+  // --- State for Filters ---
+  const [selectedFilters, setSelectedFilters] = useState({
+    carType: 'Economy',
+    passengers: '4 Passengers',
+    transmission: [],
+    cards: [],
+    deposit: [],
+    companies: []
+  });
+
+  const [expandedSections, setExpandedSections] = useState({
+    transmission: true,
+    cards: true,
+    deposit: true,
+    companies: true
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const toggleMobileSection = (section) => {
+    setExpandedMobileSection(prev => prev === section ? null : section);
+  };
+
+  const handleFilterChange = (category, value) => {
+    if (category === 'carType' || category === 'passengers') {
+      setSelectedFilters(prev => ({
+        ...prev,
+        [category]: value
+      }));
+    } else {
+      setSelectedFilters(prev => ({
+        ...prev,
+        [category]: prev[category].includes(value)
+          ? prev[category].filter(item => item !== value)
+          : [...prev[category], value]
+      }));
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSelectedFilters({
+      carType: '',
+      passengers: '',
+      transmission: [],
+      cards: [],
+      deposit: [],
+      companies: []
+    });
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (selectedFilters.carType) count++;
+    if (selectedFilters.passengers) count++;
+    count += selectedFilters.transmission.length;
+    count += selectedFilters.cards.length;
+    count += selectedFilters.deposit.length;
+    count += selectedFilters.companies.length;
+    return count;
+  };
+
+  // --- UI Components ---
+  const FilterButton = ({ label, isSelected, onClick, icon: Icon }) => (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+        isSelected
+          ? 'bg-gray-900 text-white shadow-md'
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+      }`}
+    >
+      {Icon && <Icon className="w-4 h-4" />}
+      {label}
+    </button>
+  );
+
+  const CheckboxItem = ({ label, checked, onChange }) => (
+    <label className="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 rounded px-1">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="w-4 h-4 text-[#0174b7] border-gray-300 rounded focus:ring-[#0174b7]"
+      />
+      <span className="text-sm text-gray-700">{label}</span>
+    </label>
+  );
+
+  const SectionHeader = ({ title, isExpanded, onToggle, icon: Icon }) => (
+    <button
+      onClick={onToggle}
+      className="flex items-center justify-between w-full py-3 text-left"
+    >
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className="w-5 h-5 text-gray-600" />}
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+      </div>
+      <ChevronUp className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isExpanded ? '' : 'rotate-180'}`} />
+    </button>
+  );
+
+  const MobileSectionHeader = ({ title, isExpanded, onToggle, icon: Icon }) => (
+    <button
+      onClick={onToggle}
+      className="flex items-center justify-between w-full py-4 px-4 text-left border-b border-gray-200"
+    >
+      <div className="flex items-center gap-3">
+        {Icon && <Icon className="w-5 h-5 text-gray-600" />}
+        <h3 className="text-base font-medium text-gray-900">{title}</h3>
+      </div>
+      <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+    </button>
+  );
+
+  // Mobile filter sections data
+  const mobileFilterSections = [
+    { id: 'carType', title: 'Car type', icon: Car },
+    { id: 'fuelPolicy', title: 'Fuel Policy', icon: Fuel },
+    { id: 'pickupLocation', title: 'Pick-up Location', icon: Navigation },
+    { id: 'transmission', title: 'Transmission', icon: Settings },
+    { id: 'supplier', title: 'Choose supplier', icon: Building2 },
+    { id: 'seats', title: 'Number of Seats', icon: Users },
+    { id: 'excess', title: 'Excess', icon: Umbrella },
+    { id: 'mileage', title: 'Mileage', icon: Route },
+    { id: 'cancellation', title: 'Cancellation', icon: Ban },
+    { id: 'additionalDriver', title: 'Additional driver', icon: UserPlus },
+    { id: 'debitCard', title: 'Debit Card', icon: CreditCard },
+    { id: 'deposit', title: 'Deposit on Pick-up', icon: Coins }
+  ];
+
+  // Search component state and handlers
+  const [showPickupCalendar, setShowPickupCalendar] = useState(false);
+  const [showDropoffCalendar, setShowDropoffCalendar] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   const locations = [
     'Malta International Airport',
@@ -24,130 +199,15 @@ const CarRentalCards = () => {
     'Bugibba'
   ];
 
-  const cars = [
-    {
-      id: 1,
-      model: "Fiat Panda",
-      category: "Or similar - Small Cars",
-      seats: 4,
-      transmission: "Automatic",
-      airCondition: "Air Condition",
-      bags: 2,
-      price: "59.5",
-      originalPrice: "77.95",
-      pricePerDay: "29.75",
-      currency: "€",
-      features: [
-        "Free Cancellation",
-        "Theft Protection", 
-        "Free Amendments",
-        "Full Insurance"
-      ],
-      supplier: "Europcar"
-    },
-    {
-      id: 2,
-      model: "Fiat Panda",
-      category: "Or similar - Small Cars", 
-      seats: 4,
-      transmission: "Automatic",
-      airCondition: "Air Condition",
-      bags: 3,
-      price: "59.5",
-      originalPrice: "77.95", 
-      pricePerDay: "29.75",
-      currency: "€",
-      features: [
-        "Free Cancellation",
-        "Theft Protection",
-        "Free Amendments", 
-        "Full Insurance"
-      ],
-      supplier: "Hertz"
-    },
-    {
-      id: 3,
-      model: "Fiat Panda",
-      category: "Or similar - Small Cars",
-      seats: 4,
-      transmission: "Automatic",
-      airCondition: "Air Condition",
-      bags: 3,
-      price: "59.5",
-      originalPrice: "77.95",
-      pricePerDay: "29.75", 
-      currency: "€",
-      features: [
-        "Free Cancellation",
-        "Theft Protection",
-        "Free Amendments",
-        "Full Insurance"
-      ],
-      supplier: "Avis"
-    },
-    {
-      id: 4,
-      model: "Fiat Panda", 
-      category: "Or similar - Small Cars",
-      seats: 4,
-      transmission: "Automatic", 
-      airCondition: "Air Condition",
-      bags: 2,
-      price: "59.5",
-      originalPrice: "77.95",
-      pricePerDay: "29.75",
-      currency: "€",
-      features: [
-        "Free Cancellation",
-        "Theft Protection",
-        "Free Amendments",
-        "Full Insurance"
-      ],
-      supplier: "Budget"
-    },
-    {
-      id: 5,
-      model: "Fiat Panda",
-      category: "Or similar - Small Cars",
-      seats: 4, 
-      transmission: "Automatic",
-      airCondition: "Air Condition",
-      bags: 3,
-      price: "59.5",
-      originalPrice: "77.95",
-      pricePerDay: "29.75",
-      currency: "€", 
-      features: [
-        "Free Cancellation",
-        "Theft Protection", 
-        "Free Amendments",
-        "Full Insurance"
-      ],
-      supplier: "Sixt"
-    },
-    {
-      id: 6,
-      model: "Fiat Panda",
-      category: "Or similar - Small Cars",
-      seats: 4,
-      transmission: "Automatic",
-      airCondition: "Air Condition", 
-      bags: 3,
-      price: "59.5",
-      originalPrice: "77.95",
-      pricePerDay: "29.75",
-      currency: "€",
-      features: [
-        "Free Cancellation", 
-        "Theft Protection",
-        "Free Amendments",
-        "Full Insurance"
-      ],
-      supplier: "Enterprise"
-    }
+  const timeOptions = [
+    '00:00', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30',
+    '04:00', '04:30', '05:00', '05:30', '06:00', '06:30', '07:00', '07:30',
+    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
+    '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
+    '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'
   ];
 
-  // Generate calendar days for current month
   const generateCalendarDays = () => {
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
@@ -170,7 +230,7 @@ const CarRentalCards = () => {
   const formatDate = (day) => {
     if (!day) return '';
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return `${day} ${monthNames[currentMonth]} ${currentYear}`;
   };
 
@@ -178,16 +238,16 @@ const CarRentalCards = () => {
     if (direction === 'prev') {
       if (currentMonth === 0) {
         setCurrentMonth(11);
-        setCurrentYear(currentYear - 1);
+        setCurrentYear(prev => prev - 1);
       } else {
-        setCurrentMonth(currentMonth - 1);
+        setCurrentMonth(prev => prev - 1);
       }
     } else {
       if (currentMonth === 11) {
         setCurrentMonth(0);
-        setCurrentYear(currentYear + 1);
+        setCurrentYear(prev => prev + 1);
       } else {
-        setCurrentMonth(currentMonth + 1);
+        setCurrentMonth(prev => prev + 1);
       }
     }
   };
@@ -220,32 +280,9 @@ const CarRentalCards = () => {
     setShowTimePicker(false);
   };
 
-  const handleViewDeal = (car) => {
-    // Handle view deal action - you can customize this based on your needs
-    console.log('View deal for:', car.model, {
-      selectedCar: car,
-      pickupLocation: selectedLocation,
-      pickupDate: selectedDates.pickupDate,
-      dropoffDate: selectedDates.dropoffDate,
-      pickupTime: selectedDates.time
-    });
-    
-    // You can add your custom navigation logic here
-    alert(`Viewing deal for ${car.model} from ${car.supplier}`);
-  };
-
-  const timeOptions = [
-    '00:00', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30',
-    '04:00', '04:30', '05:00', '05:30', '06:00', '06:30', '07:00', '07:30',
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
-    '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'
-  ];
-
   const Calendar = ({ onDateSelect, onClose }) => {
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                       'July', 'August', 'September', 'October', 'November', 'December'];
+                     'July', 'August', 'September', 'October', 'November', 'December'];
     
     return (
       <div className="absolute top-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 left-0 right-0 md:left-auto md:right-auto md:w-80">
@@ -353,220 +390,15 @@ const CarRentalCards = () => {
     </div>
   );
 
-  const CarCard = ({ car }) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
-      {/* Header */}
-      <div className="p-4 pb-2">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-gray-900 mb-1">{car.model}</h3>
-            <p className="text-sm text-gray-600 mb-2">{car.category}</p>
-          </div>
-          <button className="flex items-center gap-1 text-[#0174b7] text-sm hover:text-[#005f8c] ml-2">
-            <Info className="w-4 h-4" />
-            <span className="hidden md:inline">Rental Conditions</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Car Image */}
-      <div className="px-4 pb-4">
-        <div className="w-full h-40 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
-          <div className="w-32 h-20 bg-gray-300 rounded flex items-center justify-center">
-            <span className="text-gray-500 text-xs">Car Image</span>
-          </div>
-        </div>
-
-        {/* Car Features - Horizontal Layout */}
-        <div className="flex items-center justify-between text-xs text-gray-600 mb-4 bg-gray-50 rounded-lg p-3">
-          <div className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            <span>{car.seats} seats</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Cog className="w-4 h-4" />
-            <span>{car.transmission}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Snowflake className="w-4 h-4" />
-            <span>{car.airCondition}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Luggage className="w-4 h-4" />
-            <span>{car.bags} Bags</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Section */}
-      <div className="p-4 pt-0 mt-auto">
-        {/* Features List */}
-        <div className="mb-4">
-          <div className="grid grid-cols-2 gap-y-1 text-xs text-gray-700">
-            {car.features.map((feature, index) => (
-              <div key={index} className="flex items-start gap-1">
-                <Check className="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" />
-                <span>{feature}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Price and Action Section */}
-        <div className="flex items-end justify-between">
-          {/* Price Section */}
-          <div>
-            <div className="text-red-600 font-medium text-sm line-through mb-1">
-              {car.originalPrice} {car.currency}
-            </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {car.price} {car.currency}
-            </div>
-            <div className="text-xs text-gray-600">
-              Price per day: {car.pricePerDay} {car.currency}
-            </div>
-          </div>
-
-          {/* Right Side - Supplier Logo and Button */}
-          <div className="flex flex-col items-center gap-3">
-            {/* Supplier Logo */}
-            <div className="w-12 h-8 bg-orange-100 rounded flex items-center justify-center">
-              <span className="text-orange-600 text-xs font-bold">{car.supplier.substring(0, 3).toUpperCase()}</span>
-            </div>
-            
-            {/* View Deal Button */}
-            <button 
-              onClick={() => handleViewDeal(car)}
-              className="bg-[#0174b7] hover:bg-[#005f8c] text-white font-semibold px-6 py-2 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap"
-            >
-              View Deal
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-50 py-6">
-      <div className="w-full max-w-7xl px-4 sm:px-6 lg:px-8 mx-auto">
-        {/* Header with Location and Date Selectors */}
+    <div className="flex flex-col lg:flex-row">
+      {/* Main Content Area */}
+      <div className="flex-1">
+        {/* Search Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-          {/* Mobile: Stack all elements vertically */}
-          <div className="block md:hidden space-y-4">
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Pick-up Location
-              </label>
-              <div 
-                className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-                onClick={() => {
-                  setShowLocationPicker(!showLocationPicker);
-                  setShowPickupCalendar(false);
-                  setShowDropoffCalendar(false);
-                  setShowTimePicker(false);
-                }}
-              >
-                <span className="text-gray-700 text-sm truncate">
-                  {selectedLocation}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-              </div>
-              {showLocationPicker && (
-                <LocationPicker 
-                  onSelect={(location) => setSelectedLocation(location)}
-                  onClose={() => setShowLocationPicker(false)}
-                />
-              )}
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Pick-up Date
-                </label>
-                <div 
-                  className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-                  onClick={() => {
-                    setShowPickupCalendar(!showPickupCalendar);
-                    setShowDropoffCalendar(false);
-                    setShowTimePicker(false);
-                    setShowLocationPicker(false);
-                  }}
-                >
-                  <span className="text-gray-700 text-sm truncate">
-                    {selectedDates.pickupDate || 'Select Date'}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                </div>
-                {showPickupCalendar && (
-                  <Calendar 
-                    onDateSelect={(day) => handleDateSelect(day, 'pickupDate')}
-                    onClose={() => setShowPickupCalendar(false)}
-                  />
-                )}
-              </div>
-              
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Drop-Off Date
-                </label>
-                <div 
-                  className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-                  onClick={() => {
-                    setShowDropoffCalendar(!showDropoffCalendar);
-                    setShowPickupCalendar(false);
-                    setShowTimePicker(false);
-                    setShowLocationPicker(false);
-                  }}
-                >
-                  <span className="text-gray-700 text-sm truncate">
-                    {selectedDates.dropoffDate || 'Select Date'}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                </div>
-                {showDropoffCalendar && (
-                  <Calendar 
-                    onDateSelect={(day) => handleDateSelect(day, 'dropoffDate')}
-                    onClose={() => setShowDropoffCalendar(false)}
-                  />
-                )}
-              </div>
-            </div>
-            
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <div 
-                  className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-                  onClick={() => {
-                    setShowTimePicker(!showTimePicker);
-                    setShowPickupCalendar(false);
-                    setShowDropoffCalendar(false);
-                    setShowLocationPicker(false);
-                  }}
-                >
-                  <span className="text-gray-700">
-                    {selectedDates.time || 'Time'}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
-                </div>
-                {showTimePicker && (
-                  <TimePicker 
-                    onTimeSelect={handleTimeSelect}
-                    onClose={() => setShowTimePicker(false)}
-                  />
-                )}
-              </div>
-              
-              <button className="bg-[#0174b7] hover:bg-[#005f8c] text-white p-3 rounded-lg transition-colors duration-200">
-                <Search className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Tablet: Compact horizontal layout */}
-          <div className="hidden md:flex lg:hidden items-center justify-center gap-3">
-            <div className="flex-1 relative min-w-[160px]">
+          {/* Mobile view */}
+          <div className="block md:flex lg:hidden items-center justify-center gap-3">
+            <div className="relative min-w-[160px] mb-3 md:mb-0">
               <label className="block text-xs font-medium text-gray-700 mb-1">Pick-up Location</label>
               <div 
                 className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-2 py-1.5 cursor-pointer hover:bg-gray-100"
@@ -590,7 +422,7 @@ const CarRentalCards = () => {
               )}
             </div>
             
-            <div className="flex-1 relative min-w-[120px]">
+            <div className="relative min-w-[120px] mb-3 md:mb-0">
               <label className="block text-xs font-medium text-gray-700 mb-1">Pick-up Date</label>
               <div 
                 className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-2 py-1.5 cursor-pointer hover:bg-gray-100"
@@ -602,7 +434,7 @@ const CarRentalCards = () => {
                 }}
               >
                 <span className="text-gray-700 text-sm truncate">
-                  {selectedDates.pickupDate || 'Select Date'}
+                  {selectedDates?.pickupDate || 'Select Date'}
                 </span>
                 <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
               </div>
@@ -614,7 +446,7 @@ const CarRentalCards = () => {
               )}
             </div>
             
-            <div className="flex-1 relative min-w-[120px]">
+            <div className="relative min-w-[120px] mb-3 md:mb-0">
               <label className="block text-xs font-medium text-gray-700 mb-1">Drop-Off Date</label>
               <div 
                 className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-2 py-1.5 cursor-pointer hover:bg-gray-100"
@@ -626,7 +458,7 @@ const CarRentalCards = () => {
                 }}
               >
                 <span className="text-gray-700 text-sm truncate">
-                  {selectedDates.dropoffDate || 'Select Date'}
+                  {selectedDates?.dropoffDate || 'Select Date'}
                 </span>
                 <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
               </div>
@@ -638,7 +470,7 @@ const CarRentalCards = () => {
               )}
             </div>
             
-            <div className="relative min-w-[80px]">
+            <div className="relative min-w-[80px] mb-3 md:mb-0">
               <div className="h-4 invisible">Time</div>
               <div 
                 className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-2 py-1.5 cursor-pointer hover:bg-gray-100"
@@ -650,7 +482,7 @@ const CarRentalCards = () => {
                 }}
               >
                 <span className="text-gray-700 text-sm">
-                  {selectedDates.time || 'Time'}
+                  {selectedDates?.time || 'Time'}
                 </span>
                 <ChevronDown className="w-3 h-3 text-gray-500" />
               </div>
@@ -662,14 +494,14 @@ const CarRentalCards = () => {
               )}
             </div>
             
-            <div className="pt-5">
+            <div className="pt-0 md:pt-5">
               <button className="bg-[#0174b7] hover:bg-[#005f8c] text-white p-2 rounded-lg transition-colors duration-200">
                 <Search className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Desktop: Full horizontal layout */}
+          {/* Desktop view */}
           <div className="hidden lg:flex items-center justify-center gap-4">
             <div className="flex-1 lg:flex-[1.5] relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">Pick-up Location</label>
@@ -707,7 +539,7 @@ const CarRentalCards = () => {
                 }}
               >
                 <span className="text-gray-700 text-sm md:text-base">
-                  {selectedDates.pickupDate || 'Select Date'}
+                  {selectedDates?.pickupDate || 'Select Date'}
                 </span>
                 <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
               </div>
@@ -731,7 +563,7 @@ const CarRentalCards = () => {
                 }}
               >
                 <span className="text-gray-700 text-sm md:text-base">
-                  {selectedDates.dropoffDate || 'Select Date'}
+                  {selectedDates?.dropoffDate || 'Select Date'}
                 </span>
                 <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
               </div>
@@ -755,7 +587,7 @@ const CarRentalCards = () => {
                 }}
               >
                 <span className="text-gray-700">
-                  {selectedDates.time || 'Time'}
+                  {selectedDates?.time || 'Time'}
                 </span>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </div>
@@ -775,17 +607,167 @@ const CarRentalCards = () => {
           </div>
         </div>
 
-        {/* Car Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full mx-auto">
-          {cars.map((car) => (
-            <div key={car.id} className="w-full">
-              <CarCard car={car} />
-            </div>
-          ))}
+        {/* Results Content */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Car Rental Results</h2>
+          <p className="text-gray-600">Display your car rental results here...</p>
         </div>
+      </div>
+
+      {/* Filter Sidebar - Only visible on mobile/tablet (hidden on desktop) */}
+      <div className="lg:hidden">
+        {/* Mobile Filter Bar */}
+        <div className="lg:hidden bg-gray-100 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm font-medium text-gray-700">All Filters</span>
+            <span className="text-sm text-gray-500">Popular filters</span>
+          </div>
+          
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <button
+              onClick={() => setShowMobileFilters(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full text-sm font-medium whitespace-nowrap"
+            >
+              <Filter className="w-4 h-4" />
+              Filters
+              {getActiveFiltersCount() > 0 && (
+                <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                  {getActiveFiltersCount()}
+                </span>
+              )}
+            </button>
+            
+            <FilterButton
+              label="On airport"
+              isSelected={false}
+              onClick={() => {}}
+              icon={Plane}
+            />
+            
+            <FilterButton
+              label="Automatic"
+              isSelected={selectedFilters.transmission.includes('Automatic')}
+              onClick={() => handleFilterChange('transmission', 'Automatic')}
+            />
+          </div>
+        </div>
+
+        {/* Mobile Filter Modal */}
+        {showMobileFilters && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden">
+            <div className="bg-white h-full flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-slate-800">
+                <h2 className="text-lg font-semibold text-white">Filters</h2>
+                <button
+                  onClick={() => setShowMobileFilters(false)}
+                  className="p-2 text-white"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Filter Sections */}
+              <div className="flex-1 overflow-y-auto">
+                {mobileFilterSections.map((section) => (
+                  <div key={section.id}>
+                    <MobileSectionHeader
+                      title={section.title}
+                      icon={section.icon}
+                      isExpanded={expandedMobileSection === section.id}
+                      onToggle={() => toggleMobileSection(section.id)}
+                    />
+                    
+                    {expandedMobileSection === section.id && (
+                      <div className="p-4 bg-gray-50 border-b border-gray-200">
+                        <div className="space-y-2">
+                          {section.id === 'carType' && (
+                            ['Mini', 'Economy', 'Compact', 'SUV', 'Premium'].map((type) => (
+                              <CheckboxItem
+                                key={type}
+                                label={type}
+                                checked={selectedFilters.carType === type}
+                                onChange={() => handleFilterChange('carType', type)}
+                              />
+                            ))
+                          )}
+                          
+                          {section.id === 'transmission' && (
+                            ['All', 'Automatic', 'Manual'].map((transmission) => (
+                              <CheckboxItem
+                                key={transmission}
+                                label={transmission}
+                                checked={selectedFilters.transmission.includes(transmission)}
+                                onChange={() => handleFilterChange('transmission', transmission)}
+                              />
+                            ))
+                          )}
+                          
+                          {section.id === 'seats' && (
+                            ['2 Passengers', '4 Passengers', '5 Passengers', '7 Passengers'].map((count) => (
+                              <CheckboxItem
+                                key={count}
+                                label={count}
+                                checked={selectedFilters.passengers === count}
+                                onChange={() => handleFilterChange('passengers', count)}
+                              />
+                            ))
+                          )}
+                          
+                          {section.id === 'supplier' && (
+                            [
+                              'City Go Rentals',
+                              'Abby',
+                              'Auto Union',
+                              'Car Ginny',
+                              'Europ Car',
+                              'Flex Ways',
+                              'Green Motion',
+                              'Ok Mobility',
+                              'Smart Mobility',
+                              'U-Save'
+                            ].map((company) => (
+                              <CheckboxItem
+                                key={company}
+                                label={company}
+                                checked={selectedFilters.companies.includes(company)}
+                                onChange={() => handleFilterChange('companies', company)}
+                              />
+                            ))
+                          )}
+                          
+                          {section.id === 'deposit' && (
+                            [
+                              '€ 0 - € 500',
+                              '€ 501 - € 1,000',
+                              '€ 1,001 - € 1,500',
+                              '€ 1,501 - € 2,000',
+                              '€ 2,000 +'
+                            ].map((range) => (
+                              <CheckboxItem
+                                key={range}
+                                label={range}
+                                checked={selectedFilters.deposit.includes(range)}
+                                onChange={() => handleFilterChange('deposit', range)}
+                              />
+                            ))
+                          )}
+                          
+                          {!['carType', 'transmission', 'seats', 'supplier', 'deposit'].includes(section.id) && (
+                            <p className="text-sm text-gray-500 italic">Options for {section.title} coming soon...</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default CarRentalCards;
+export default CarRentalPage;

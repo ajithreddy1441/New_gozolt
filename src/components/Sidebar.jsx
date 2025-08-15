@@ -123,7 +123,7 @@ const CarRentalSidebar = () => {
   );
 
   return (
-    <div className="hidden lg:block bg-white border-r border-gray-200 h-full overflow-y-auto w-80 xl:w-80">
+    <div className="hidden lg:block bg-white border-r border-gray-200 h-full overflow-y-auto w-80 ">
       {/* Map Section */}
       <div className="m-4 border-b border-gray-200">
         <div className="relative bg-blue-50 h-48 rounded-lg overflow-hidden" ref={mapRef}>

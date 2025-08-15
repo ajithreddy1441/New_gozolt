@@ -170,36 +170,36 @@ const Hero = () => {
         </div>
       )}
 
-      {/* Hero Section */}
-      <section className="bg-[#eef2ff] px-4 py-8 lg:py-12">
-        <div className="mx-auto grid lg:grid-cols-2 items-center gap-8">
+      {/* Hero Section - Updated with reduced height */}
+      <section className="bg-[#eef2ff]  py-6 lg:py-1 relative">
+        <div className="mx-auto grid lg:grid-cols-2 items-center gap-4">
           {/* Left Content */}
           <div className="order-1 lg:order-none">
-            <h1 className="text-3xl sm:text-4xl lg:text-7xl font-bold leading-snug ml-0 sm:ml-6">
+            <h1 className="text-2xl sm:text-3xl lg:text-7xl font-bold leading-snug ml-0 sm:ml-6">
               <span className="text-[#0174B7]">Easy</span>{" "}
               <span className="text-black">Rentals,</span> <br />
               <span className="text-black">Anywhere You Go.</span>
             </h1>
-            <p className="mt-4 sm:mt-8 mb-6 sm:mb-0 text-lg font-medium text-gray-800">
+            <p className="mt-2 sm:mt-4 mb-4 sm:mb-0 text-xl text-center font-medium text-gray-800">
               <span className="border-b-2 border-gray-400 pb-1">
                 Find Perfect Car To Drive
               </span>
             </p>
           </div>
 
-          {/* Right Image - Adjusted for tablet */}
+          {/* Right Image - Made smaller */}
           <div className="flex justify-center lg:justify-end md:justify-end">
             <img
               src="car-bg-remove.png"
               alt="Blue rental car"
-              className="max-w-full h-auto sm:h-full md:mr-0 lg:mr-0"
+              className="max-w-md h-auto sm:h-full md:mr-0 lg:mr-0"
             />
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex justify-center px-4">
-          <div className="bg-white shadow-md rounded-3xl flex flex-col sm:flex-row flex-wrap items-center p-3 sm:p-4 gap-3 sm:gap-2 w-full max-w-5xl">
+        {/* Absolute Search Bar - Positioned higher */}
+        <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-full max-w-5xl px-4 z-20">
+          <div className="bg-white shadow-2xl rounded-3xl flex flex-col sm:flex-row flex-wrap items-center p-3 sm:p-4 gap-3 sm:gap-2">
             {/* Pick-up Location */}
             <div className="flex items-center gap-2 w-full sm:flex-1 min-w-[200px] px-2">
               <MapPin className="text-gray-400" size={18} />
@@ -247,7 +247,7 @@ const Hero = () => {
           </div>
         </div>
       </section>
-  
+
       {/* Logos Row */}
       <div className="bg-white py-6 mt-6 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 text-center">
