@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, Snowflake, Luggage, Users, Settings, Shield, Navigation, ChevronDown, Phone, Mail, AlertCircle, Check, X } from 'lucide-react';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
+import emailjs from '@emailjs/browser';
 
 const CarRentalBooking = () => {
   const location = useLocation();
@@ -302,6 +303,64 @@ const CarRentalBooking = () => {
       setVendorTermsContent({ error: "Failed to load supplier rental terms." });
     }
     setVendorTermsLoading(false);
+  };
+
+  const handleBookCar = async () => {
+    const payload = {
+      car_id: carId,
+      location_id: searchParams?.location_id, // <-- Make sure this exists
+      pickup_date: searchParams?.pickup_date,
+      dropoff_date: searchParams?.return_date,
+      pickup_location: searchParams?.location,
+      dropoff_location: searchParams?.location, // or use a separate dropoff location if available
+      driver_age: driverDetails.dateOfBirth ? 
+        Math.floor((new Date() - new Date(driverDetails.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) : null,
+      country: driverDetails.country,
+      first_name: driverDetails.firstName,
+      last_name: driverDetails.lastName,
+      email: driverDetails.email,
+      phone: driverDetails.phoneNumber,
+      // Add other fields if needed
+      extras: Object.keys(selectedExtras).filter(key => selectedExtras[key]),
+      total_price: calculateTotal(),
+    };
+
+    try {
+      const res = await fetch('https://api.rentnrides.com/api/book-car', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      console.log('Booking API response:', data); // Debug
+      if (res.ok && data.success) {
+        alert('Booking successful!');
+        // Send email via EmailJS
+        emailjs.send(
+          'service_p3qxdg9',
+          'template_axb3od8',
+          {
+            to_email: driverDetails.email,
+            to_name: driverDetails.firstName + ' ' + driverDetails.lastName,
+            car_model: carDetail?.model_type || carDetail?.model || 'Car',
+            pickup_location: searchParams?.location,
+            pickup_date: searchParams?.pickup_date,
+            return_date: searchParams?.return_date,
+            total_price: calculateTotal(),
+            reservation_no: data.reservation_no || data.id || 'N/A',
+          },
+          'cphBYQUzdfIEB2wTF'
+        ).then(() => {
+          console.log('Email sent!');
+        }).catch((err) => {
+          console.error('EmailJS error:', err);
+        });
+      } else {
+        alert(data.message || JSON.stringify(data.errors) || 'Booking failed');
+      }
+    } catch (err) {
+      alert('Booking failed: ' + err.message);
+    }
   };
 
   return (
@@ -866,8 +925,8 @@ const CarRentalBooking = () => {
                   if (result.error) {
                     alert(result.error.message);
                   } else if (result.paymentIntent.status === 'succeeded') {
-                    alert('Payment successful!');
                     setShowPaymentModal(false);
+                    await handleBookCar();
                   }
                 }}
               >
