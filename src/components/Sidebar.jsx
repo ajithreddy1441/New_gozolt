@@ -1,11 +1,19 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { MapPin, Search, ChevronUp, Car, Users, Settings, CreditCard, Euro, Building2, SlidersHorizontal } from 'lucide-react';
 
-const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
+const CarRentalSidebar = ({
+  externalSelectedLocation,
+  mobileOnly,
+  filters,
+  onFilterChange,
+  onClearFilters,
+  resultsCount = 0
+}) => {
   // --- State for Map ---
   const [selectedLocation, setSelectedLocation] = useState(null);
   const mapRef = useRef(null);
   const [mapDimensions, setMapDimensions] = useState({ width: 280, height: 200 });
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const rentalLocations = useMemo(() => ([
     { id: 1, name: "Moha International Airport", lat: 32, lng: 45 },
@@ -54,80 +62,35 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
       });
       return;
     }
-    // Fallback: try to find a rental location by name contains
-    const byName = rentalLocations.find(loc =>
-      externalSelectedLocation.name && loc.name.toLowerCase().includes(externalSelectedLocation.name.toLowerCase())
-    );
-    setSelectedLocation(byName || null);
-  }, [externalSelectedLocation, rentalLocations]);
+    // Fallback: try to find a rental location by address or name contains
+  const byAddressOrName = rentalLocations.find(loc => {
+    const externalText = externalSelectedLocation.address || externalSelectedLocation.name || '';
+    const locationText = loc.name || '';
+    return externalText && locationText.toLowerCase().includes(externalText.toLowerCase());
+  });
+  
+  setSelectedLocation(byAddressOrName || null);
+}, [externalSelectedLocation, rentalLocations]);
 
   const openInGoogleMaps = () => {
-    if (!selectedLocation) return;
-    let url = '';
-    if (
-      selectedLocation.id === 'external' &&
-      typeof selectedLocation.realLat === 'number' &&
-      typeof selectedLocation.realLng === 'number'
-    ) {
-      url = `https://www.google.com/maps/search/?api=1&query=${selectedLocation.realLat},${selectedLocation.realLng}`;
-    } else if (selectedLocation.name) {
-      url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLocation.name)}`;
-    }
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
-  // --- State for Filters ---
-  const [selectedFilters, setSelectedFilters] = useState({
-    carType: [],
-    passengers: [],
-    transmission: [],
-    cards: [],
-    deposit: [],
-    companies: []
-  });
-
-  const [expandedSections, setExpandedSections] = useState({
-    transmission: true,
-    cards: true,
-    deposit: true,
-    companies: true
-  });
-
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
-  const toggleSection = (section) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  const handleFilterChange = (category, value) => {
-    if (category === 'carType' || category === 'passengers') {
-      setSelectedFilters(prev => ({
-        ...prev,
-        [category]: value
-      }));
-    } else {
-      setSelectedFilters(prev => ({
-        ...prev,
-        [category]: prev[category].includes(value)
-          ? prev[category].filter(item => item !== value)
-          : [...prev[category], value]
-      }));
-    }
-  };
-
-  const clearAllFilters = () => {
-    setSelectedFilters({
-      carType: '',
-      passengers: '',
-      transmission: [],
-      cards: [],
-      deposit: [],
-      companies: []
-    });
-  };
+  if (!selectedLocation) return;
+  let url = '';
+  if (
+    selectedLocation.id === 'external' &&
+    typeof selectedLocation.realLat === 'number' &&
+    typeof selectedLocation.realLng === 'number'
+  ) {
+    // For external locations with actual coordinates
+    url = `https://www.google.com/maps/search/?api=1&query=${selectedLocation.realLat},${selectedLocation.realLng}`;
+  } else if (selectedLocation.address) {
+    // Use address field instead of name field
+    url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLocation.address)}`;
+  } else if (selectedLocation.name) {
+    // Fallback to name field if address doesn't exist
+    url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLocation.name)}`;
+  }
+  if (url) window.open(url, '_blank', 'noopener,noreferrer');
+};
 
   // --- UI Components ---
   const FilterButton = ({ label, isSelected, onClick, icon: Icon }) => (
@@ -168,6 +131,31 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
     </button>
   );
 
+  const [expandedSections, setExpandedSections] = useState({
+    transmission: true,
+    cards: true,
+    deposit: true,
+    companies: true,
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const defaultFilters = {
+    carType: '',
+    passengers: '',
+    transmission: [],
+    cards: [],
+    deposit: [],
+    companies: [],
+  };
+
+  const safeFilters = filters || defaultFilters;
+
   // Only render mobile button if mobileOnly is true
   if (mobileOnly) {
     return (
@@ -184,7 +172,7 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
         </div>
         {/* Mobile sidebar overlay */}
         {isMobileSidebarOpen && (
-          <div className="fixed inset-0 z-50 bg-black/70 flex justify-end">
+          <div className="fixed inset-0 z-50 bg-black/70 flex justify-start">
             <div className="bg-white w-60 sm:w-80 lg:w-60 xl:w-80  max-w-full h-full overflow-y-auto shadow-xl animate-slide-in-right relative">
               <button
                 className="absolute top-4 right-4 text-gray-600 text-2xl"
@@ -271,9 +259,11 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                 {/* Filter Header */}
                 <div className="p-3 border-b border-gray-200">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold text-gray-900">51 Results</span>
+                    <span className="text-lg font-semibold text-gray-900">
+                      {resultsCount} Results
+                    </span>
                     <button
-                      onClick={clearAllFilters}
+                      onClick={onClearFilters}
                       className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-full hover:bg-gray-50"
                     >
                       Clear Filters
@@ -294,8 +284,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                         <FilterButton
                           key={type}
                           label={type}
-                          isSelected={selectedFilters.carType === type}
-                          onClick={() => handleFilterChange('carType', type)}
+                          isSelected={safeFilters.carType === type}
+                          onClick={() => onFilterChange('carType', type)}
                         />
                       ))}
                     </div>
@@ -312,8 +302,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                         <FilterButton
                           key={count}
                           label={count}
-                          isSelected={selectedFilters.passengers === count}
-                          onClick={() => handleFilterChange('passengers', count)}
+                          isSelected={safeFilters.passengers === count}
+                          onClick={() => onFilterChange('passengers', count)}
                         />
                       ))}
                     </div>
@@ -333,8 +323,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                           <CheckboxItem
                             key={transmission}
                             label={transmission}
-                            checked={selectedFilters.transmission.includes(transmission)}
-                            onChange={() => handleFilterChange('transmission', transmission)}
+                            checked={safeFilters.transmission.includes(transmission)}
+                            onChange={() => onFilterChange('transmission', transmission)}
                           />
                         ))}
                       </div>
@@ -355,8 +345,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                           <CheckboxItem
                             key={card}
                             label={card}
-                            checked={selectedFilters.cards.includes(card)}
-                            onChange={() => handleFilterChange('cards', card)}
+                            checked={safeFilters.cards.includes(card)}
+                            onChange={() => onFilterChange('cards', card)}
                           />
                         ))}
                       </div>
@@ -383,8 +373,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                           <CheckboxItem
                             key={range}
                             label={range}
-                            checked={selectedFilters.deposit.includes(range)}
-                            onChange={() => handleFilterChange('deposit', range)}
+                            checked={safeFilters.deposit.includes(range)}
+                            onChange={() => onFilterChange('deposit', range)}
                           />
                         ))}
                       </div>
@@ -402,22 +392,13 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                     {expandedSections.companies && (
                       <div className=" space-y-1">
                         {[
-                          'City Go Rentals',
-                          'Abby',
-                          'Auto Union',
-                          'Car Ginny',
-                          'Europ Car',
-                          'Flex Ways',
-                          'Green Motion',
-                          'Ok Mobility',
-                          'Smart Mobility',
-                          'U-Save'
+                          'City Go Rentals'
                         ].map((company) => (
                           <CheckboxItem
                             key={company}
                             label={company}
-                            checked={selectedFilters.companies.includes(company)}
-                            onChange={() => handleFilterChange('companies', company)}
+                            checked={safeFilters.companies.includes(company)}
+                            onChange={() => onFilterChange('companies', company)}
                           />
                         ))}
                       </div>
@@ -521,9 +502,11 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
         {/* Filter Header */}
         <div className="p-3 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <span className="text-lg font-semibold text-gray-900">51 Results</span>
+            <span className="text-lg font-semibold text-gray-900">
+              {resultsCount} Results
+            </span>
             <button
-              onClick={clearAllFilters}
+              onClick={onClearFilters}
               className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-full hover:bg-gray-50"
             >
               Clear Filters
@@ -544,8 +527,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                 <FilterButton
                   key={type}
                   label={type}
-                  isSelected={selectedFilters.carType === type}
-                  onClick={() => handleFilterChange('carType', type)}
+                  isSelected={safeFilters.carType === type}
+                  onClick={() => onFilterChange('carType', type)}
                 />
               ))}
             </div>
@@ -562,8 +545,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                 <FilterButton
                   key={count}
                   label={count}
-                  isSelected={selectedFilters.passengers === count}
-                  onClick={() => handleFilterChange('passengers', count)}
+                  isSelected={safeFilters.passengers === count}
+                  onClick={() => onFilterChange('passengers', count)}
                 />
               ))}
             </div>
@@ -583,8 +566,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                   <CheckboxItem
                     key={transmission}
                     label={transmission}
-                    checked={selectedFilters.transmission.includes(transmission)}
-                    onChange={() => handleFilterChange('transmission', transmission)}
+                    checked={safeFilters.transmission.includes(transmission)}
+                    onChange={() => onFilterChange('transmission', transmission)}
                   />
                 ))}
               </div>
@@ -605,8 +588,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                   <CheckboxItem
                     key={card}
                     label={card}
-                    checked={selectedFilters.cards.includes(card)}
-                    onChange={() => handleFilterChange('cards', card)}
+                    checked={safeFilters.cards.includes(card)}
+                    onChange={() => onFilterChange('cards', card)}
                   />
                 ))}
               </div>
@@ -633,8 +616,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                   <CheckboxItem
                     key={range}
                     label={range}
-                    checked={selectedFilters.deposit.includes(range)}
-                    onChange={() => handleFilterChange('deposit', range)}
+                    checked={safeFilters.deposit.includes(range)}
+                    onChange={() => onFilterChange('deposit', range)}
                   />
                 ))}
               </div>
@@ -652,22 +635,13 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
             {expandedSections.companies && (
               <div className=" space-y-1">
                 {[
-                  'City Go Rentals',
-                  'Abby',
-                  'Auto Union',
-                  'Car Ginny',
-                  'Europ Car',
-                  'Flex Ways',
-                  'Green Motion',
-                  'Ok Mobility',
-                  'Smart Mobility',
-                  'U-Save'
+                  'City Go Rentals'
                 ].map((company) => (
                   <CheckboxItem
                     key={company}
                     label={company}
-                    checked={selectedFilters.companies.includes(company)}
-                    onChange={() => handleFilterChange('companies', company)}
+                    checked={safeFilters.companies.includes(company)}
+                    onChange={() => onFilterChange('companies', company)}
                   />
                 ))}
               </div>
@@ -677,7 +651,7 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
       </div>
       {/* Mobile/Tablet Sidebar Overlay */}
       {isMobileSidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/70 flex justify-end">
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/70 flex justify-start">
           {/* <div className='w-full h-screen bg-black opacity-40'>
 
           </div> */}
@@ -768,12 +742,14 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
 
               {/* Filter Header */}
               <div className="p-3 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-gray-900">51 Results</span>
-                  <button
-                    onClick={clearAllFilters}
-                    className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-full hover:bg-gray-50"
-                  >
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-semibold text-gray-900">
+                  {resultsCount} Results
+                </span>
+                <button
+                  onClick={onClearFilters}
+                  className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-full hover:bg-gray-50"
+                >
                     Clear Filters
                   </button>
                 </div>
@@ -792,8 +768,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                       <FilterButton
                         key={type}
                         label={type}
-                        isSelected={selectedFilters.carType === type}
-                        onClick={() => handleFilterChange('carType', type)}
+                        isSelected={safeFilters.carType === type}
+                        onClick={() => onFilterChange('carType', type)}
                       />
                     ))}
                   </div>
@@ -810,8 +786,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                       <FilterButton
                         key={count}
                         label={count}
-                        isSelected={selectedFilters.passengers === count}
-                        onClick={() => handleFilterChange('passengers', count)}
+                        isSelected={safeFilters.passengers === count}
+                        onClick={() => onFilterChange('passengers', count)}
                       />
                     ))}
                   </div>
@@ -831,8 +807,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                         <CheckboxItem
                           key={transmission}
                           label={transmission}
-                          checked={selectedFilters.transmission.includes(transmission)}
-                          onChange={() => handleFilterChange('transmission', transmission)}
+                          checked={safeFilters.transmission.includes(transmission)}
+                          onChange={() => onFilterChange('transmission', transmission)}
                         />
                       ))}
                     </div>
@@ -853,8 +829,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                         <CheckboxItem
                           key={card}
                           label={card}
-                          checked={selectedFilters.cards.includes(card)}
-                          onChange={() => handleFilterChange('cards', card)}
+                          checked={safeFilters.cards.includes(card)}
+                          onChange={() => onFilterChange('cards', card)}
                         />
                       ))}
                     </div>
@@ -881,8 +857,8 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                         <CheckboxItem
                           key={range}
                           label={range}
-                          checked={selectedFilters.deposit.includes(range)}
-                          onChange={() => handleFilterChange('deposit', range)}
+                          checked={safeFilters.deposit.includes(range)}
+                          onChange={() => onFilterChange('deposit', range)}
                         />
                       ))}
                     </div>
@@ -900,22 +876,13 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                   {expandedSections.companies && (
                     <div className=" space-y-1">
                       {[
-                        'City Go Rentals',
-                        'Abby',
-                        'Auto Union',
-                        'Car Ginny',
-                        'Europ Car',
-                        'Flex Ways',
-                        'Green Motion',
-                        'Ok Mobility',
-                        'Smart Mobility',
-                        'U-Save'
+                        'City Go Rentals'
                       ].map((company) => (
                         <CheckboxItem
                           key={company}
                           label={company}
-                          checked={selectedFilters.companies.includes(company)}
-                          onChange={() => handleFilterChange('companies', company)}
+                          checked={safeFilters.companies.includes(company)}
+                          onChange={() => onFilterChange('companies', company)}
                         />
                       ))}
                     </div>

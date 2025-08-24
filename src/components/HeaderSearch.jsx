@@ -26,7 +26,7 @@ const HeaderSearch = ({
   });
   const [selectedLocationCoords, setSelectedLocationCoords] = useState(null);
   const [selectedDropoffLocationCoords, setSelectedDropoffLocationCoords] = useState(null);
-  const [returnSameLocation, setReturnSameLocation] = useState(true);
+  const [returnSameLocation] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [showPickupCalendar, setShowPickupCalendar] = useState(false);
@@ -41,14 +41,24 @@ const HeaderSearch = ({
         const autocompletePickup = new window.google.maps.places.Autocomplete(pickupInputRef.current);
         autocompletePickup.addListener('place_changed', () => {
           const place = autocompletePickup.getPlace();
-          setSelectedLocation(place.formatted_address || place.name || "");
+          setSelectedLocation(place.name || place.formatted_address || "");
+          if (place.geometry && place.geometry.location) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            setSelectedLocationCoords({ lat, lng });
+          }
         });
       }
       if (window.google && dropoffInputRef.current) {
         const autocompleteDropoff = new window.google.maps.places.Autocomplete(dropoffInputRef.current);
         autocompleteDropoff.addListener('place_changed', () => {
           const place = autocompleteDropoff.getPlace();
-          setSelectedDropoffLocation(place.formatted_address || place.name || "");
+          setSelectedDropoffLocation(place.name || place.formatted_address || "");
+          if (place.geometry && place.geometry.location) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            setSelectedDropoffLocationCoords({ lat, lng });
+          }
         });
       }
     }
@@ -280,7 +290,6 @@ const HeaderSearch = ({
       !selectedDates.pickupDate ||
       !selectedDates.dropoffDate
     ) {
-      alert("Please fill in all search fields");
       return;
     }
 

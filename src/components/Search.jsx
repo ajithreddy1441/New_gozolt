@@ -27,6 +27,42 @@ const CarRentalLayout = () => {
     return { id: "external", name: pickup };
   }, [pickup, pickupLat, pickupLng]);
 
+  const [filters, setFilters] = useState({
+    carType: '',
+    passengers: '',
+    transmission: [],
+    cards: [],
+    deposit: [],
+    companies: []
+  });
+
+  const handleFilterChange = (category, value) => {
+    if (category === 'carType' || category === 'passengers') {
+      setFilters(prev => ({
+        ...prev,
+        [category]: value
+      }));
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [category]: prev[category].includes(value)
+          ? prev[category].filter(item => item !== value)
+          : [...prev[category], value]
+      }));
+    }
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      carType: '',
+      passengers: '',
+      transmission: [],
+      cards: [],
+      deposit: [],
+      companies: []
+    });
+  };
+
   // Check if we have cars data from navigation state
   useEffect(() => {
     if (location.state?.carsData) {
@@ -74,6 +110,66 @@ const CarRentalLayout = () => {
     }
   };
 
+  // Filtering logic
+  const filteredCars = useMemo(() => {
+    return carsData.filter(car => {
+      // Car Type
+      if (filters.carType && car.category !== filters.carType) return false;
+      // Passengers - Extract the number from the filter string
+    if (filters.passengers) {
+      const filterSeats = parseInt(filters.passengers); // Extract "4" from "4 Passengers"
+      if (car.seats !== filterSeats) return false;
+    }
+      // Transmission - Handle "All", "Automatic", and "Manual" filters
+    if (filters.transmission.length > 0) {
+      // If "All" is selected, show all cars regardless of transmission
+      if (filters.transmission.includes('All')) {
+        // Do nothing, show all cars
+      } 
+      // If specific transmission types are selected
+      else {
+        const carTransmission = car.transmission_type?.toLowerCase() || '';
+        
+        const hasAutomatic = filters.transmission.includes('Automatic') && 
+                            (carTransmission.includes('auto') || carTransmission === 'automatic');
+        
+        const hasManual = filters.transmission.includes('Manual') && 
+                         (carTransmission.includes('manual') || carTransmission.includes('man'));
+        
+        // Show car only if it matches at least one selected transmission type
+        if (!hasAutomatic && !hasManual) return false;
+      }
+    }
+     // Deposit filter - handle string values like "750.00"
+    if (filters.deposit.length > 0) {
+      // Convert deposit string to number (remove any non-numeric characters except decimal point)
+      const carDeposit = parseFloat(car.deposit?.replace(/[^\d.]/g, '') || 0);
+      
+      const matchesDeposit = filters.deposit.some(depositRange => {
+        switch (depositRange) {
+          case '€ 0 - € 500':
+            return carDeposit >= 0 && carDeposit <= 500;
+          case '€ 501 - € 1,000':
+            return carDeposit >= 501 && carDeposit <= 1000;
+          case '€ 1,001 - € 1,500':
+            return carDeposit >= 1001 && carDeposit <= 1500;
+          case '€ 1,501 - € 2,000':
+            return carDeposit >= 1501 && carDeposit <= 2000;
+          case '€ 2,000 +':
+            return carDeposit > 2000;
+          default:
+            return false;
+        }
+      });
+      
+      if (!matchesDeposit) return false;
+    }
+    
+    // Add other filters as needed...
+      return true;
+    });
+  }, [carsData, filters]);
+
   return (
 
     <div className="min-h-screen bg-gray-50">
@@ -81,7 +177,13 @@ const CarRentalLayout = () => {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar for desktop */}
           <div className="hidden lg:block w-60 xl:w-80 flex-shrink-0">
-            <Sidebar externalSelectedLocation={externalSelectedLocation} />
+            <Sidebar
+              externalSelectedLocation={externalSelectedLocation}
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onClearFilters={clearAllFilters}
+              resultsCount={filteredCars.length} // Add this
+            />
           </div>
 
           {/* Main content area */}
@@ -90,17 +192,21 @@ const CarRentalLayout = () => {
               setCarsData={setCarsData}
               pickupInputRef={pickupInputRef}
               dropoffInputRef={dropoffInputRef}
-            />
+            /> 
 
             {/* Filters button for mobile/tablet */}
             <div className="block lg:hidden mb-4">
               <Sidebar
-                externalSelectedLocation={externalSelectedLocation}
-                mobileOnly
-              />
+                  externalSelectedLocation={externalSelectedLocation}
+                  mobileOnly
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  onClearFilters={clearAllFilters}
+                  resultsCount={filteredCars.length} // Add this
+                />
             </div>
 
-            <Cars carsData={carsData} loading={loading} searchParams={searchParams} />
+            <Cars carsData={filteredCars} loading={loading} searchParams={searchParams} />
           </div>
         </div>
       </div>
