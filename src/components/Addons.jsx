@@ -305,63 +305,103 @@ const CarRentalBooking = () => {
     setVendorTermsLoading(false);
   };
 
-  const handleBookCar = async () => {
-    const payload = {
-      car_id: carId,
-      location_id: searchParams?.location_id, // <-- Make sure this exists
-      pickup_date: searchParams?.pickup_date,
-      dropoff_date: searchParams?.return_date,
-      pickup_location: searchParams?.location,
-      dropoff_location: searchParams?.location, // or use a separate dropoff location if available
-      driver_age: driverDetails.dateOfBirth ? 
-        Math.floor((new Date() - new Date(driverDetails.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) : null,
-      country: driverDetails.country,
-      first_name: driverDetails.firstName,
-      last_name: driverDetails.lastName,
-      email: driverDetails.email,
-      phone: driverDetails.phoneNumber,
-      // Add other fields if needed
-      extras: Object.keys(selectedExtras).filter(key => selectedExtras[key]),
-      total_price: calculateTotal(),
-    };
+  // Update your handleBookCar function
+const handleBookCar = async () => {
+  // Validate that we have all required data from searchParams
+  if (!searchParams?.location_id) {
+    alert("Location information is missing");
+    return;
+  }
+  
+  if (!searchParams?.pickup_date || !searchParams?.return_date) {
+    alert("Date information is missing");
+    return;
+  }
 
-    try {
-      const res = await fetch('https://api.rentnrides.com/api/book-car', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      console.log('Booking API response:', data); // Debug
-      if (res.ok && data.success) {
-        alert('Booking successful!');
-        // Send email via EmailJS
-        emailjs.send(
-          'service_p3qxdg9',
-          'template_axb3od8',
-          {
-            to_email: driverDetails.email,
-            to_name: driverDetails.firstName + ' ' + driverDetails.lastName,
-            car_model: carDetail?.model_type || carDetail?.model || 'Car',
-            pickup_location: searchParams?.location,
-            pickup_date: searchParams?.pickup_date,
-            return_date: searchParams?.return_date,
-            total_price: calculateTotal(),
-            reservation_no: data.reservation_no || data.id || 'N/A',
-          },
-          'cphBYQUzdfIEB2wTF'
-        ).then(() => {
-          console.log('Email sent!');
-        }).catch((err) => {
-          console.error('EmailJS error:', err);
-        });
-      } else {
-        alert(data.message || JSON.stringify(data.errors) || 'Booking failed');
-      }
-    } catch (err) {
-      alert('Booking failed: ' + err.message);
-    }
+  // Format dates properly for the API (YYYY-MM-DD HH:MM format)
+  const formatDateForAPI = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = '10'; // Default to 10:00 as per your email template
+    const minutes = '00';
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
   };
+
+  const payload = {
+    car_id: parseInt(carId), // Convert to integer
+    location_id: parseInt(searchParams.location_id), // Convert to integer
+    pickup_date: formatDateForAPI(searchParams.pickup_date),
+    dropoff_date: formatDateForAPI(searchParams.return_date),
+    pickup_location: searchParams.location,
+    dropoff_location: searchParams.location, // Same as pickup
+    driver_age: driverDetails.dateOfBirth ? 
+      Math.floor((new Date() - new Date(driverDetails.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) : null,
+    country: driverDetails.country || null,
+    first_name: driverDetails.firstName,
+    last_name: driverDetails.lastName,
+    email: driverDetails.email,
+    phone: driverDetails.phoneNumber,
+    // Add optional fields if available
+    address: driverDetails.address || null,
+    city: driverDetails.city || null,
+    state: driverDetails.state || null,
+    zipcode: driverDetails.zipcode || null,
+    extras: Object.keys(selectedExtras).filter(key => selectedExtras[key]),
+    total_price: calculateTotal(),
+  };
+
+  // Log the payload for debugging
+  console.log("Booking payload:", JSON.stringify(payload, null, 2));
+
+  try {
+    const res = await fetch('https://api.rentnrides.com/api/book-car', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    
+    const data = await res.json();
+    console.log('Booking API response:', data);
+    
+    if (res.ok && data.success) {
+      alert('Booking successful!');
+      
+      // Send email via EmailJS (simplified version)
+      emailjs.send(
+        'service_p3qxdg9',
+        'template_axb3od8',
+        {
+          to_email: driverDetails.email,
+          to_name: `${driverDetails.firstName} ${driverDetails.lastName}`,
+          car_model: carDetail?.model_type || carDetail?.model || 'Car',
+          pickup_location: searchParams.location,
+          pickup_date: searchParams.pickup_date,
+          return_date: searchParams.return_date,
+          total_price: calculateTotal(),
+          reservation_no: data.reservation_no || data.data?.booking_id || 'N/A',
+        },
+        'cphBYQUzdfIEB2wTF'
+      ).then(() => {
+        console.log('Email sent!');
+      }).catch((err) => {
+        console.error('EmailJS error:', err);
+      });
+    } else {
+      // Show detailed error message from server
+      const errorMsg = data.message || 
+                       (data.errors ? JSON.stringify(data.errors) : 'Booking failed');
+      alert(`Booking failed: ${errorMsg}`);
+    }
+  } catch (err) {
+    alert('Booking failed: ' + err.message);
+  }
+};
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-gray-50 min-h-screen">
@@ -490,7 +530,7 @@ const CarRentalBooking = () => {
                         </div>
                         <div>
                           <h4 className="font-semibold text-gray-900">{extra.name}</h4>
-                          <p className="text-xs sm:text-sm text-gray-600">
+                          <p className="text-xs sm:text-base text-gray-600">
                             {extra.quantity ? `Available: ${extra.quantity}` : ''}
                           </p>
                         </div>
@@ -501,7 +541,7 @@ const CarRentalBooking = () => {
                         </span>
                         <button
                           onClick={() => toggleExtra(extra.name)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          className={`relative inline-flex h-6 w-11 min-w-[44px] flex-shrink-0 items-center rounded-full transition-colors ${
                             selectedExtras[extra.name] ? 'bg-[#0174b4]' : 'bg-gray-300'
                           }`}
                         >
@@ -587,7 +627,7 @@ const CarRentalBooking = () => {
                     {extras.filter(extra => selectedExtras[extra.name]).map(extra => (
                       <div className="flex justify-between" key={extra.name}>
                         <span className="text-gray-600">{extra.name}</span>
-                        <span className="font-medium">€ {extra.fee}</span>
+                        <span className="font-medium">{extra.fee} €</span>
                       </div>
                     ))}
                   </div>
@@ -831,7 +871,7 @@ const CarRentalBooking = () => {
                     {extras.filter(extra => selectedExtras[extra.name]).map(extra => (
                       <div className="flex justify-between" key={extra.name}>
                         <span className="text-gray-600">{extra.name}</span>
-                        <span className="font-medium">€ {extra.fee}</span>
+                        <span className="font-medium">{extra.fee} €</span>
                       </div>
                     ))}
                   </div>
