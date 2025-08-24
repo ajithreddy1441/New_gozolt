@@ -284,7 +284,7 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                 </div>
 
                 {/* Filters */}
-                <div className="p-4">
+                <div className="p-4 space-y-6">
                   {/* Car Type */}
                   <div>
                     <div className="flex items-center gap-2 m-2">

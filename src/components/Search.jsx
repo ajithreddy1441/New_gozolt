@@ -74,34 +74,35 @@ const CarRentalLayout = () => {
   };
 
   return (
-    <div className="bg-gray-50">
-      <div className="lg:container mx-auto lg:px-2 py-4">
-        <div className="flex flex-col lg:flex-row">
-          {/* Sidebar for desktop */}
-          <div className="hidden lg:block lg:w-80 xl:w-96 flex-shrink-0">
-            <Sidebar externalSelectedLocation={externalSelectedLocation} />
-          </div>
-          
-          {/* Main content area */}
-          <div className="flex-1">
-            <HeaderSearch
-              pickupInputRef={pickupInputRef}
-              dropoffInputRef={dropoffInputRef}
-            />
-            
-            {/* Filters button for mobile/tablet */}
-            <div className="block lg:hidden my-4">
-              <Sidebar
-                externalSelectedLocation={externalSelectedLocation}
-                mobileOnly
-              />
-            </div>
-            
-            <Cars carsData={carsData} loading={loading} />
-          </div>
+    
+<div className="min-h-screen bg-gray-50">
+  <div className="w-full px-0 py-4">
+    <div className="flex flex-col lg:flex-row gap-6">
+      {/* Sidebar for desktop */}
+      <div className="hidden lg:block w-80 flex-shrink-0">
+        <Sidebar externalSelectedLocation={externalSelectedLocation} />
+      </div>
+      
+      {/* Main content area */}
+      <div className="flex-1 min-w-0"> {/* min-w-0 prevents flex overflow */}
+        <HeaderSearch
+          pickupInputRef={pickupInputRef}
+          dropoffInputRef={dropoffInputRef}
+        />
+        
+        {/* Filters button for mobile/tablet */}
+        <div className="block lg:hidden mb-4">
+          <Sidebar
+            externalSelectedLocation={externalSelectedLocation}
+            mobileOnly
+          />
         </div>
+        
+        <Cars carsData={carsData} loading={loading} />
       </div>
     </div>
+  </div>
+</div>
   );
 };
 

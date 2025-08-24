@@ -545,14 +545,14 @@ const handleBookCar = async () => {
                   extras.map(extra => (
                     <div key={extra.name} className="bg-white rounded-lg p-4 sm:p-6 shadow-sm flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                           {/* Icon selection based on extra name */}
                           {extra.name.toLowerCase().includes('gps') ? (
-                            <Navigation className="w-6 h-6 text-[#0174b4]" />
+                            <Navigation className="w-5 h-5 sm:w-6 sm:h-6 text-[#0174b4]" />
                           ) : extra.name.toLowerCase().includes('driver') ? (
-                            <Users className="w-6 h-6 text-[#0174b4]" />
+                            <Users className="w-5 h-5 sm:w-6 sm:h-6 text-[#0174b4]" />
                           ) : (
-                            <Shield className="w-6 h-6 text-[#0174b4]" />
+                            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-[#0174b4]" />
                           )}
                         </div>
                         <div>
