@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Cog, Snowflake, Luggage, Check, Info, Loader2 } from 'lucide-react';
 
-const Cars = ({ carsData = [], loading = false, searchParams = {} }) => {
+const Cars = ({ carsData = [], loading = false, searchParams }) => {
   const navigate = useNavigate();
 
   // Transform API data to match the expected format
@@ -74,7 +74,7 @@ const Cars = ({ carsData = [], loading = false, searchParams = {} }) => {
   const CarCard = ({ car }) => (
     <div className="bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200 w-full flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="p-4 flex justify-between items-start">
+      <div className="p-4 flex justify-between items-start min-h-32">
         <div className="min-h-[40px]">
           <h3 className="text-lg font-bold text-gray-900">{car.model}</h3>
           <p className="text-sm text-gray-600">
@@ -118,9 +118,9 @@ const Cars = ({ carsData = [], loading = false, searchParams = {} }) => {
       </div>
 
       {/* Price (left) + Features (right) */}
-      <div className="p-4 flex items-start gap-6 border-b border-gray-200 flex-grow">
+      <div className="p-4 flex items-start justify-center flex-col gap-4 border-b border-gray-200">
         {/* Price column (fixed width) */}
-        <div className="shrink-0">
+        <div className="flex items-start justify-start flex-col w-full">
           {car.originalPrice && (
             <div className="text-red-600 text-sm line-through">
               {car.originalPrice} {car.currency}
@@ -135,7 +135,7 @@ const Cars = ({ carsData = [], loading = false, searchParams = {} }) => {
         </div>
 
         {/* Features column (fixed width, left-aligned text, dedicated icon column) */}
-        <div className="ml-auto w-[260px] shrink-0 text-sm text-gray-800">
+        <div className="w-full text-sm text-gray-800 min-h-[5.7rem]">
           {car.features && car.features.length > 0 ? (
             <ul className="space-y-1 leading-5">
               {car.features.map((feature, idx) => (
@@ -174,7 +174,7 @@ const Cars = ({ carsData = [], loading = false, searchParams = {} }) => {
   if (loading) {
     return (
       <div className="bg-gray-50 pb-6">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-1">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex justify-center items-center py-20">
             <div className="flex items-center gap-3">
               <Loader2 className="w-6 h-6 animate-spin text-[#0174b7]" />
@@ -189,7 +189,7 @@ const Cars = ({ carsData = [], loading = false, searchParams = {} }) => {
   if (cars.length === 0) {
     return (
       <div className="bg-gray-50 pb-6">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-1">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex justify-center items-center py-20">
             <div className="text-center">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No cars found</h3>
@@ -203,7 +203,7 @@ const Cars = ({ carsData = [], loading = false, searchParams = {} }) => {
 
   return (
     <div className="bg-gray-50 pb-6">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-1">
+      <div className="w-full max-w-7xl mx-auto lg:px-0">
         {/* 3 cards per row on desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {cars.map((car) => (

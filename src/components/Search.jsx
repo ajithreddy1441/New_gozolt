@@ -7,10 +7,11 @@ import { useLocation } from "react-router-dom";
 const CarRentalLayout = () => {
   const location = useLocation();
   const [carsData, setCarsData] = useState([]);
+  const { searchParams } = location.state || {};
   const [loading, setLoading] = useState(false);
   const pickupInputRef = useRef(null);
   const dropoffInputRef = useRef(null);
-  
+
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const pickup = params.get("pickup") || undefined;
   const pickupLat = params.get("pickupLat");
@@ -38,11 +39,11 @@ const CarRentalLayout = () => {
 
   const fetchCarsFromParams = async () => {
     if (!location.search) return;
-    
+
     setLoading(true);
     try {
       const params = new URLSearchParams(location.search);
-      
+
       const formData = new URLSearchParams();
       formData.append('pickup_location', params.get('pickup_location') || '[]');
       formData.append('dropoff_location', params.get('dropoff_location') || '[]');
@@ -74,35 +75,36 @@ const CarRentalLayout = () => {
   };
 
   return (
-    
-<div className="min-h-screen bg-gray-50">
-  <div className="w-full px-0 py-4">
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* Sidebar for desktop */}
-      <div className="hidden lg:block w-80 flex-shrink-0">
-        <Sidebar externalSelectedLocation={externalSelectedLocation} />
-      </div>
-      
-      {/* Main content area */}
-      <div className="flex-1 min-w-0"> {/* min-w-0 prevents flex overflow */}
-        <HeaderSearch
-          pickupInputRef={pickupInputRef}
-          dropoffInputRef={dropoffInputRef}
-        />
-        
-        {/* Filters button for mobile/tablet */}
-        <div className="block lg:hidden mb-4">
-          <Sidebar
-            externalSelectedLocation={externalSelectedLocation}
-            mobileOnly
-          />
+
+    <div className="min-h-screen bg-gray-50">
+      <div className="w-full px-5 py-4">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar for desktop */}
+          <div className="hidden lg:block w-60 xl:w-80 flex-shrink-0">
+            <Sidebar externalSelectedLocation={externalSelectedLocation} />
+          </div>
+
+          {/* Main content area */}
+          <div className="flex-1 min-w-0"> {/* min-w-0 prevents flex overflow */}
+            <HeaderSearch
+              setCarsData={setCarsData}
+              pickupInputRef={pickupInputRef}
+              dropoffInputRef={dropoffInputRef}
+            />
+
+            {/* Filters button for mobile/tablet */}
+            <div className="block lg:hidden mb-4">
+              <Sidebar
+                externalSelectedLocation={externalSelectedLocation}
+                mobileOnly
+              />
+            </div>
+
+            <Cars carsData={carsData} loading={loading} searchParams={searchParams} />
+          </div>
         </div>
-        
-        <Cars carsData={carsData} loading={loading} />
       </div>
     </div>
-  </div>
-</div>
   );
 };
 

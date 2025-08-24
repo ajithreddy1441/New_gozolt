@@ -5,29 +5,29 @@ import { useNavigate } from "react-router-dom";
 const formatDate = (day, currentMonth, currentYear) => {
   if (!day) return '';
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${day} ${monthNames[currentMonth]} ${currentYear}`;
 };
 
 const formatDateTime = (date, time) => {
   if (!date || !time) return '';
-  
+
   // Parse the date (format: "20 Aug 2025")
   const dateParts = date.split(' ');
   const day = dateParts[0];
   const monthName = dateParts[1];
   const year = dateParts[2];
-  
+
   // Convert month name to number
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const monthIndex = monthNames.indexOf(monthName);
-  
+
   // Create date object and format
   const dateObj = new Date(year, monthIndex, day);
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const dayName = dayNames[dateObj.getDay()];
-  
+
   // Format to match the API expectation (e.g., "Wed, Aug 20, 2025 10:00")
   return `${dayName}, ${monthName} ${day}, ${year} ${time}`;
 };
@@ -153,17 +153,17 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
         console.error('Google Maps API not loaded');
         return;
       }
-      
+
       if (!window.google.maps) {
         console.error('Google Maps not available');
         return;
       }
-      
+
       if (!window.google.maps.places) {
         console.error('Google Maps Places not available');
         return;
       }
-      
+
       if (!window.google.maps.places.Autocomplete) {
         console.error('Google Maps Autocomplete not available');
         return;
@@ -179,7 +179,7 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
           try {
             const place = autocompleteRef.current.getPlace();
             setSelectedLocation(place.name || place.formatted_address || "");
-            
+
             // Extract coordinates
             if (place.geometry && place.geometry.location) {
               const lat = place.geometry.location.lat();
@@ -202,7 +202,7 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
           try {
             const place = dropoffAutocompleteRef.current.getPlace();
             setSelectedDropoffLocation(place.name || place.formatted_address || "");
-            
+
             // Extract coordinates
             if (place.geometry && place.geometry.location) {
               const lat = place.geometry.location.lat();
@@ -224,7 +224,7 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
       if (!returnSameLocation && dropoffLocationInputRef.current && window.google && window.google.maps && window.google.maps.places) {
         // Clean any previous instance before creating new one
         if (dropoffAutocompleteRef.current) {
-          try { window.google.maps.event.clearInstanceListeners(dropoffAutocompleteRef.current); } catch {console.error('Error clearing previous dropoff autocomplete listeners');}
+          try { window.google.maps.event.clearInstanceListeners(dropoffAutocompleteRef.current); } catch { console.error('Error clearing previous dropoff autocomplete listeners'); }
           dropoffAutocompleteRef.current = null;
         }
 
@@ -237,7 +237,7 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
           try {
             const place = dropoffAutocompleteRef.current.getPlace();
             setSelectedDropoffLocation(place.name || place.formatted_address || "");
-            
+
             // Extract coordinates
             if (place.geometry && place.geometry.location) {
               const lat = place.geometry.location.lat();
@@ -256,19 +256,19 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
     // Cleanup when dependency changes (e.g., toggling back to same location removes input)
     return () => {
       if (dropoffAutocompleteRef.current && window.google && window.google.maps) {
-        try { window.google.maps.event.clearInstanceListeners(dropoffAutocompleteRef.current); } catch {console.error('Error clearing dropoff autocomplete listeners');}
+        try { window.google.maps.event.clearInstanceListeners(dropoffAutocompleteRef.current); } catch { console.error('Error clearing dropoff autocomplete listeners'); }
         dropoffAutocompleteRef.current = null;
       }
     };
   }, [returnSameLocation]);
 
   const timeOptions = [
-    "00:00","00:30","01:00","01:30","02:00","02:30","03:00","03:30",
-    "04:00","04:30","05:00","05:30","06:00","06:30","07:00","07:30",
-    "08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30",
-    "12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30",
-    "16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30",
-    "20:00","20:30","21:00","21:30","22:00","22:30","23:00","23:30",
+    "00:00", "00:30", "01:00", "01:30", "02:00", "02:30", "03:00", "03:30",
+    "04:00", "04:30", "05:00", "05:30", "06:00", "06:30", "07:00", "07:30",
+    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+    "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
+    "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30",
   ];
 
   const handleSearch = async () => {
@@ -300,22 +300,22 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
     // Format datetime strings for API
     const pickupDateTime = formatDateTime(selectedDates.pickupDate, selectedDates.pickupTime || "10:00");
     const dropoffDateTime = formatDateTime(selectedDates.dropoffDate, selectedDates.dropoffTime || "10:00");
-    
+
     // Format location coordinates as JSON strings
     const pickupLocationData = JSON.stringify({
       lat: selectedLocationCoords.lat,
       lng: selectedLocationCoords.lng
     });
 
-    const dropoffLocationData = returnSameLocation 
+    const dropoffLocationData = returnSameLocation
       ? JSON.stringify({
-          lat: selectedLocationCoords.lat,
-          lng: selectedLocationCoords.lng
-        })
+        lat: selectedLocationCoords.lat,
+        lng: selectedLocationCoords.lng
+      })
       : JSON.stringify({
-          lat: selectedDropoffLocationCoords.lat,
-          lng: selectedDropoffLocationCoords.lng
-        });
+        lat: selectedDropoffLocationCoords.lat,
+        lng: selectedDropoffLocationCoords.lng
+      });
 
     try {
       // Prepare form data for API call (x-www-form-urlencoded format)
@@ -343,16 +343,16 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
       }
 
       const data = await response.json();
-      
+
       // Calculate rental days
       const pickupDate = new Date(pickupDateTime);
       const dropoffDate = new Date(dropoffDateTime);
       const diffTime = Math.abs(dropoffDate - pickupDate);
       const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       // Navigate to search page with the API response data
-      navigate(`/search`, { 
-        state: { 
+      navigate(`/search`, {
+        state: {
           carsData: data.data?.cars || [],
           searchParams: {
             location: selectedLocation,
@@ -372,19 +372,19 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
       if (onSearchComplete) onSearchComplete();
     } catch (error) {
       console.error('Error searching cars:', error);
-      
+
       let errorMessage = 'Failed to search cars. Please try again.';
       if (error.message.includes('CORS')) {
         errorMessage = 'CORS error: Please check if the API allows requests from this domain.';
       } else if (error.message.includes('Network')) {
         errorMessage = 'Network error: Please check your internet connection.';
       }
-      
+
       alert(errorMessage);
-      
+
       // Even if API fails, navigate to search page with empty data
-      navigate(`/search`, { 
-        state: { 
+      navigate(`/search`, {
+        state: {
           carsData: [],
           searchParams: {
             location: selectedLocation,
@@ -400,7 +400,7 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
           }
         }
       });
-      
+
       if (onSearchComplete) onSearchComplete();
     }
   };
@@ -470,8 +470,8 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
 
   const Calendar = ({ onDateSelect, onClose }) => {
     const monthNames = [
-      "January","February","March","April","May","June",
-      "July","August","September","October","November","December",
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
     ];
 
     return (
@@ -512,11 +512,10 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
                 key={index}
                 onClick={() => day && !isPastDate(day) && onDateSelect(day)}
                 disabled={!day || isPastDate(day)}
-                className={`h-8 w-8 text-sm rounded ${
-                  day && !isPastDate(day)
-                    ? "hover:bg-blue-100 cursor-pointer text-gray-900"
-                    : "text-gray-400 cursor-not-allowed"
-                }`}
+                className={`h-8 w-8 text-sm rounded ${day && !isPastDate(day)
+                  ? "hover:bg-blue-100 cursor-pointer text-gray-900"
+                  : "text-gray-400 cursor-not-allowed"
+                  }`}
               >
                 {day}
               </button>
@@ -652,7 +651,7 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
           {/* Pick-up Time */}
           <div className="flex-1 relative w-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {selectedDates.pickupTime ? selectedDates.pickupTime : "Time"}
+              {"Time"}
             </label>
             <div
               className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
@@ -706,7 +705,7 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
           {/* Drop-off Time */}
           <div className="flex-1 relative w-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {selectedDates.dropoffTime ? selectedDates.dropoffTime : "Time"}
+              {"Time"}
             </label>
             <div
               className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
@@ -731,7 +730,7 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
           </div>
 
           {/* Search Button */}
-          <div className="pt-6">
+          <div className="pt-6 hidden md:block">
             <button
               onClick={handleSearch}
               className="bg-[#0174b7] hover:bg-[#005f8c] text-white p-3 rounded-full transition-colors duration-200"
@@ -742,7 +741,7 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
         </div>
 
         {/* Second Row */}
-        <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="flex flex-col md:flex-row items-center gap-2 sm:gap-4">
           {/* Return car checkbox */}
           <div className="flex items-center gap-2">
             <input
@@ -761,60 +760,74 @@ const SearchBar = ({ onSearchStart, onSearchComplete }) => {
           <div className="flex-1"></div>
 
           {/* Driver Details */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center flex-col sm:flex-row gap-4">
             <span className="text-sm text-gray-700">Driver's country of residence is</span>
-            
+
             {/* Country Dropdown */}
-            <div className="relative">
-              <div
-                className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-1 cursor-pointer hover:bg-gray-100 min-w-[80px]"
-                onClick={() => {
-                  setShowCountryDropdown(!showCountryDropdown);
-                  setShowAgeDropdown(false);
-                }}
-              >
-                <span className="text-gray-700 text-sm">{driverDetails.country}</span>
-                <ChevronDown className="w-3 h-3 text-gray-500 ml-2" />
-              </div>
-              {showCountryDropdown && (
-                <Dropdown
-                  options={countries}
-                  onSelect={(countryCode) => {
-                    setDriverDetails(prev => ({ ...prev, country: countryCode }));
-                    setShowCountryDropdown(false);
-                  }}
-                  onClose={() => setShowCountryDropdown(false)}
-                  displayKey="name"
-                  valueKey="code"
-                />
-              )}
-            </div>
-
-            <span className="text-sm text-gray-700">and age is</span>
-
-            {/* Age Dropdown */}
-            <div className="relative">
-              <div
-                className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-1 cursor-pointer hover:bg-gray-100 min-w-[80px]"
-                onClick={() => {
-                  setShowAgeDropdown(!showAgeDropdown);
-                  setShowCountryDropdown(false);
-                }}
-              >
-                <span className="text-gray-700 text-sm">{driverDetails.age}</span>
-                <ChevronDown className="w-3 h-3 text-gray-500 ml-2" />
-              </div>
-              {showAgeDropdown && (
-                <Dropdown
-                  options={ageRanges}
-                  onSelect={(age) => {
-                    setDriverDetails(prev => ({ ...prev, age }));
+            <div className="flex items-center justify-start gap-2">
+              <div className="relative">
+                <div
+                  className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-1 cursor-pointer hover:bg-gray-100 min-w-[80px]"
+                  onClick={() => {
+                    setShowCountryDropdown(!showCountryDropdown);
                     setShowAgeDropdown(false);
                   }}
-                  onClose={() => setShowAgeDropdown(false)}
-                />
-              )}
+                >
+                  <span className="text-gray-700 text-sm">{driverDetails.country}</span>
+                  <ChevronDown className="w-3 h-3 text-gray-500 ml-2" />
+                </div>
+                {showCountryDropdown && (
+                  <Dropdown
+                    options={countries}
+                    onSelect={(countryCode) => {
+                      setDriverDetails(prev => ({ ...prev, country: countryCode }));
+                      setShowCountryDropdown(false);
+                    }}
+                    onClose={() => setShowCountryDropdown(false)}
+                    displayKey="name"
+                    valueKey="code"
+                  />
+                )}
+              </div>
+              <span className="text-sm text-gray-700">and age is</span>
+              {/* Age Dropdown */}
+              <div className="relative">
+                <div
+                  className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-1 cursor-pointer hover:bg-gray-100 min-w-[60px] sm:min-w-[80px]"
+                  onClick={() => {
+                    setShowAgeDropdown(!showAgeDropdown);
+                    setShowCountryDropdown(false);
+                  }}
+                >
+                  <span className="text-gray-700 text-sm">{driverDetails.age}</span>
+                  <ChevronDown className="w-3 h-3 text-gray-500 ml-2" />
+                </div>
+                {showAgeDropdown && (
+                  <Dropdown
+                    options={ageRanges}
+                    onSelect={(age) => {
+                      setDriverDetails(prev => ({ ...prev, age }));
+                      setShowAgeDropdown(false);
+                    }}
+                    onClose={() => setShowAgeDropdown(false)}
+                  />
+                )}
+              </div>
             </div>
+          </div>
+        </div>
+        {/* Search Button */}
+        <div className="w-full flex items-center justify-center">
+          <div className="pt-6 block md:hidden">
+            <button
+              onClick={handleSearch}
+              className="bg-[#0174b7] hover:bg-[#005f8c] text-white px-3 py-1 md:p-3 rounded-full transition-colors duration-200"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <Search className="w-5 h-5" />
+                <span>Search</span>
+              </span>
+            </button>
           </div>
         </div>
       </div>

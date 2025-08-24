@@ -2,19 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown } from 'lucide-react';
 
 const HeaderSearch = ({
-  selectedLocation,
-  setSelectedLocation,
-  selectedDropoffLocation,
-  setSelectedDropoffLocation,
-  selectedDates,
-  setSelectedDates,
-  currentMonth,
-  setCurrentMonth,
-  currentYear,
-  setCurrentYear,
+  // selectedLocation,
+  // setSelectedLocation,
+  // selectedDropoffLocation,
+  // setSelectedDropoffLocation,
+  // selectedDates,
+  // setSelectedDates,
+  // currentMonth,
+  // setCurrentMonth,
+  // currentYear,
+  // setCurrentYear,
+  setCarsData,
   pickupInputRef,
   dropoffInputRef,
 }) => {
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedDropoffLocation, setSelectedDropoffLocation] = useState("");
+  const [selectedDates, setSelectedDates] = useState({
+    pickupDate: "",
+    pickupTime: "",
+    dropoffDate: "",
+    dropoffTime: "",
+  });
+  const [selectedLocationCoords, setSelectedLocationCoords] = useState(null);
+  const [selectedDropoffLocationCoords, setSelectedDropoffLocationCoords] = useState(null);
+  const [returnSameLocation, setReturnSameLocation] = useState(true);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [showPickupCalendar, setShowPickupCalendar] = useState(false);
   const [showDropoffCalendar, setShowDropoffCalendar] = useState(false);
   const [showPickupTimePicker, setShowPickupTimePicker] = useState(false);
@@ -109,7 +123,7 @@ const HeaderSearch = ({
   const formatDate = (day) => {
     if (!day) return '';
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return `${day} ${monthNames[currentMonth]} ${currentYear}`;
   };
 
@@ -159,12 +173,12 @@ const HeaderSearch = ({
   // Components
   const Calendar = ({ onDateSelect, onClose, showDays = true }) => {
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                       'July', 'August', 'September', 'October', 'November', 'December'];
+      'July', 'August', 'September', 'October', 'November', 'December'];
     return (
       <div className="absolute top-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 left-0 right-0 md:left-auto md:right-auto md:w-80">
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
-            <button 
+            <button
               onClick={() => navigateMonth('prev')}
               className="p-1 hover:bg-gray-100 rounded"
             >
@@ -176,7 +190,7 @@ const HeaderSearch = ({
               {monthNames[currentMonth]} {currentYear}
             </h3>
             <div className="flex items-center gap-2">
-              <button 
+              <button
                 onClick={() => navigateMonth('next')}
                 className="p-1 hover:bg-gray-100 rounded"
               >
@@ -199,13 +213,10 @@ const HeaderSearch = ({
                   key={index}
                   onClick={() => day && !isPastDate(day) && onDateSelect(day)}
                   disabled={!day || isPastDate(day)}
-                  className={`h-8 w-8 text-sm rounded hover:bg-blue-50 ${
-                    day ? 'text-gray-900' : ''
-                  } ${
-                    day && isPastDate(day)
-                      ? 'text-gray-400 cursor-not-allowed' 
-                      : day ? 'hover:bg-blue-100 cursor-pointer' : ''
-                  }`}
+                  className={`h-8 w-8 text-sm rounded ${day && !isPastDate(day)
+                    ? "hover:bg-blue-100 cursor-pointer text-gray-900"
+                    : "text-gray-400 cursor-not-allowed"
+                    }`}
                 >
                   {day}
                 </button>
@@ -241,37 +252,239 @@ const HeaderSearch = ({
     </div>
   );
 
-  // Removed LocationPicker and all static location usage
+  // API call
+  const formatDateTime = (date, time) => {
+    if (!date || !time) return '';
+    const dateParts = date.split(' ');
+    const day = dateParts[0];
+    const monthName = dateParts[1];
+    const year = dateParts[2];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthIndex = monthNames.indexOf(monthName);
+    const dateObj = new Date(year, monthIndex, day);
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayName = dayNames[dateObj.getDay()];
+    return `${dayName}, ${monthName} ${day}, ${year} ${time}`;
+  };
+
+  const onSearchStart = () => { };
+  const onSearchComplete = () => { };
+
+  const handleSearch = async () => {
+    if (
+      !selectedLocation ||
+      selectedLocation === "Location" ||
+      !selectedLocationCoords ||
+      (!returnSameLocation && (!selectedDropoffLocation || selectedDropoffLocation === "Location" || !selectedDropoffLocationCoords)) ||
+      !selectedDates.pickupDate ||
+      !selectedDates.dropoffDate
+    ) {
+      alert("Please fill in all search fields");
+      return;
+    }
+
+    if (!selectedDates.pickupDate || selectedDates.pickupDate === "Select Date") {
+      alert("Please select a pickup date");
+      return;
+    }
+
+    if (!selectedDates.dropoffDate || selectedDates.dropoffDate === "Select Date") {
+      alert("Please select a dropoff date");
+      return;
+    }
+
+    onSearchStart();
+
+    const pickupDateTime = formatDateTime(selectedDates.pickupDate, selectedDates.pickupTime || "10:00");
+    const dropoffDateTime = formatDateTime(selectedDates.dropoffDate, selectedDates.dropoffTime || "10:00");
+
+    const pickupLocationData = JSON.stringify({
+      lat: selectedLocationCoords.lat,
+      lng: selectedLocationCoords.lng
+    });
+
+    const dropoffLocationData = returnSameLocation
+      ? JSON.stringify({
+        lat: selectedLocationCoords.lat,
+        lng: selectedLocationCoords.lng
+      })
+      : JSON.stringify({
+        lat: selectedDropoffLocationCoords.lat,
+        lng: selectedDropoffLocationCoords.lng
+      });
+
+    try {
+      const formData = new URLSearchParams();
+      formData.append('pickup_location', pickupLocationData);
+      formData.append('dropoff_location', dropoffLocationData);
+      formData.append('pickup_date', pickupDateTime);
+      formData.append('dropoff_date', dropoffDateTime);
+      formData.append('driver_age', "");
+      formData.append('country', "");
+
+      const response = await fetch('https://api.rentnrides.com/api/search-car', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString()
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      // Calculate rental days
+      const pickupDate = new Date(pickupDateTime);
+      const dropoffDate = new Date(dropoffDateTime);
+      const diffTime = Math.abs(dropoffDate - pickupDate);
+      const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      // Pass data to parent if needed
+      if (setCarsData) setCarsData(data.data?.cars || []);
+
+      onSearchComplete();
+    } catch (error) {
+      console.error('Error searching cars:', error);
+
+      let errorMessage = 'Failed to search cars. Please try again.';
+      if (error.message.includes('CORS')) {
+        errorMessage = 'CORS error: Please check if the API allows requests from this domain.';
+      } else if (error.message.includes('Network')) {
+        errorMessage = 'Network error: Please check your internet connection.';
+      }
+
+      alert(errorMessage);
+
+      if (setCarsData) setCarsData([]);
+      onSearchComplete();
+    }
+  };
+  // const handleSearch = async () => {
+  //   if (
+  //     !selectedLocation ||
+  //     selectedLocation === "Location" ||
+  //     !selectedLocationCoords ||
+  //     (!returnSameLocation && (!selectedDropoffLocation || selectedDropoffLocation === "Location" || !selectedDropoffLocationCoords)) ||
+  //     !selectedDates.pickupDate ||
+  //     !selectedDates.dropoffDate
+  //   ) {
+  //     alert("Please fill in all search fields");
+  //     return;
+  //   }
+
+  //   // Additional validation for dates
+  //   if (!selectedDates.pickupDate || selectedDates.pickupDate === "Select Date") {
+  //     alert("Please select a pickup date");
+  //     return;
+  //   }
+
+  //   if (!selectedDates.dropoffDate || selectedDates.dropoffDate === "Select Date") {
+  //     alert("Please select a dropoff date");
+  //     return;
+  //   }
+
+  //   if (onSearchStart) onSearchStart();
+
+  //   // Format datetime strings for API
+  //   const pickupDateTime = formatDateTime(selectedDates.pickupDate, selectedDates.pickupTime || "10:00");
+  //   const dropoffDateTime = formatDateTime(selectedDates.dropoffDate, selectedDates.dropoffTime || "10:00");
+
+  //   // Format location coordinates as JSON strings
+  //   const pickupLocationData = JSON.stringify({
+  //     lat: selectedLocationCoords.lat,
+  //     lng: selectedLocationCoords.lng
+  //   });
+
+  //   const dropoffLocationData = returnSameLocation
+  //     ? JSON.stringify({
+  //       lat: selectedLocationCoords.lat,
+  //       lng: selectedLocationCoords.lng
+  //     })
+  //     : JSON.stringify({
+  //       lat: selectedDropoffLocationCoords.lat,
+  //       lng: selectedDropoffLocationCoords.lng
+  //     });
+
+  //   try {
+  //     // Prepare form data for API call (x-www-form-urlencoded format)
+  //     const formData = new URLSearchParams();
+  //     formData.append('pickup_location', pickupLocationData);
+  //     formData.append('dropoff_location', dropoffLocationData);
+  //     formData.append('pickup_date', pickupDateTime);
+  //     formData.append('dropoff_date', dropoffDateTime);
+  //     formData.append('driver_age', "");
+  //     formData.append('country', "");
+
+  //     // Make API call
+  //     const response = await fetch('https://api.rentnrides.com/api/search-car', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/x-www-form-urlencoded',
+  //       },
+  //       body: formData.toString()
+  //     });
+
+  //     if (!response.ok) {
+  //       const errorText = await response.text();
+  //       console.error('API Error Response:', errorText);
+  //       throw new Error(`HTTP ${response.status}: ${errorText}`);
+  //     }
+
+  //     const data = await response.json();
+
+  //     // Calculate rental days
+  //     const pickupDate = new Date(pickupDateTime);
+  //     const dropoffDate = new Date(dropoffDateTime);
+  //     const diffTime = Math.abs(dropoffDate - pickupDate);
+  //     const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  //     if (onSearchComplete) onSearchComplete();
+  //   } catch (error) {
+  //     console.error('Error searching cars:', error);
+
+  //     let errorMessage = 'Failed to search cars. Please try again.';
+  //     if (error.message.includes('CORS')) {
+  //       errorMessage = 'CORS error: Please check if the API allows requests from this domain.';
+  //     } else if (error.message.includes('Network')) {
+  //       errorMessage = 'Network error: Please check your internet connection.';
+  //     }
+
+  //     alert(errorMessage);
+  //   }
+  // };
 
   return (
     <div className="space-y-4 mb-4">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        {/* Mobile view */}
-        <div className="block md:hidden space-y-4">
-          {/* Pick-up Location Search Bar */}
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Pick-up Location
-            </label>
+
+        {/* Desktop view */}
+        <div className="grid md:grid-cols-3 xl:grid-cols-5 gap-4">
+
+          <div className="flex-1 lg:flex-[1.5] relative">
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">Pick-up Location</label> */}
             <input
               ref={pickupInputRef}
               type="text"
-              className="w-full bg-gray-50 border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none"
+              className="w-full bg-white border border-gray-300 rounded-full px-3 py-2 text-gray-700 focus:outline-none"
               placeholder="Enter pick-up location"
               value={selectedLocation}
               onChange={e => setSelectedLocation(e.target.value)}
               autoComplete="off"
             />
           </div>
-          {/* Drop-off Location Search Bar */}
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Drop-off Location
-            </label>
+
+          <div className="flex-1 lg:flex-[1.5] relative">
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">Drop-off Location</label> */}
             <input
               ref={dropoffInputRef}
               type="text"
-              className="w-full bg-gray-50 border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none"
+              className="w-full bg-white border border-gray-300 rounded-full px-3 py-2 text-gray-700 focus:outline-none"
               placeholder="Enter drop-off location"
               value={selectedDropoffLocation}
               onChange={e => setSelectedDropoffLocation(e.target.value)}
@@ -279,154 +492,10 @@ const HeaderSearch = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Pick-up Date
-              </label>
-              <div 
-                className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-                onClick={() => {
-                  setShowPickupCalendar(!showPickupCalendar);
-                  setShowDropoffCalendar(false);
-                  setShowPickupTimePicker(false);
-                  setShowDropoffTimePicker(false);
-                }}
-              >
-                <span className="text-gray-700 text-sm truncate">
-                  {selectedDates?.pickupDate || 'Select Date'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-              </div>
-              {showPickupCalendar && (
-                <Calendar 
-                  onDateSelect={(day) => handleDateSelect(day, 'pickupDate')}
-                  onClose={() => setShowPickupCalendar(false)}
-                />
-              )}
-            </div>
-            
-            <div className="relative">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Pick-up Time
-                </label>
-              </div>
-              <div 
-                className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-                onClick={() => {
-                  setShowPickupTimePicker(!showPickupTimePicker);
-                  setShowPickupCalendar(false);
-                  setShowDropoffCalendar(false);
-                  setShowDropoffTimePicker(false);
-                }}
-              >
-                <span className="text-gray-700 text-sm truncate">
-                  {selectedDates?.pickupTime || 'Select Time'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-              </div>
-              {showPickupTimePicker && (
-                <TimePicker 
-                  onTimeSelect={(time) => handleTimeSelect(time, 'pickupTime')}
-                  onClose={() => setShowPickupTimePicker(false)}
-                />
-              )}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Drop-off Date
-              </label>
-              <div 
-                className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-                onClick={() => {
-                  setShowDropoffCalendar(!showDropoffCalendar);
-                  setShowPickupCalendar(false);
-                  setShowPickupTimePicker(false);
-                  setShowDropoffTimePicker(false);
-                }}
-              >
-                <span className="text-gray-700 text-sm truncate">
-                  {selectedDates?.dropoffDate || 'Select Date'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-              </div>
-              {showDropoffCalendar && (
-                <Calendar 
-                  onDateSelect={(day) => handleDateSelect(day, 'dropoffDate')}
-                  onClose={() => setShowDropoffCalendar(false)}
-                />
-              )}
-            </div>
-            
-            <div className="relative">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Drop-off Time
-                </label>
-              </div>
-              <div 
-                className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-                onClick={() => {
-                  setShowDropoffTimePicker(!showDropoffTimePicker);
-                  setShowPickupCalendar(false);
-                  setShowDropoffCalendar(false);
-                  setShowPickupTimePicker(false);
-                }}
-              >
-                <span className="text-gray-700 text-sm truncate">
-                  {selectedDates?.dropoffTime || 'Select Time'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-              </div>
-              {showDropoffTimePicker && (
-                <TimePicker 
-                  onTimeSelect={(time) => handleTimeSelect(time, 'dropoffTime')}
-                  onClose={() => setShowDropoffTimePicker(false)}
-                />
-              )}
-            </div>
-          </div>
-          
-          <button className="w-full bg-[#0174b7] hover:bg-[#005f8c] text-white p-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
-            <Search className="w-5 h-5" />
-            <span>Search</span>
-          </button>
-        </div>
-
-        {/* Tablet view */}
-        <div className="hidden md:flex lg:hidden items-center justify-center gap-3">
-          <div className="flex-1 relative min-w-[160px]">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Pick-up Location</label>
-            <input
-              ref={pickupInputRef}
-              type="text"
-              className="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1.5 text-gray-700 focus:outline-none"
-              placeholder="Enter pick-up location"
-              value={selectedLocation}
-              onChange={e => setSelectedLocation(e.target.value)}
-              autoComplete="off"
-            />
-          </div>
-          <div className="flex-1 relative min-w-[160px]">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Drop-off Location</label>
-            <input
-              ref={dropoffInputRef}
-              type="text"
-              className="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1.5 text-gray-700 focus:outline-none"
-              placeholder="Enter drop-off location"
-              value={selectedDropoffLocation}
-              onChange={e => setSelectedDropoffLocation(e.target.value)}
-              autoComplete="off"
-            />
-          </div>
-          <div className="flex-1 relative min-w-[120px]">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Pick-up Date</label>
-            <div 
-              className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-2 py-1.5 cursor-pointer hover:bg-gray-100"
+          <div className="flex-1 relative">
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">Pick-u Date</label> */}
+            <div
+              className="flex items-center justify-between bg-white border border-gray-300 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-100"
               onClick={() => {
                 setShowPickupCalendar(!showPickupCalendar);
                 setShowDropoffCalendar(false);
@@ -434,47 +503,23 @@ const HeaderSearch = ({
                 setShowDropoffTimePicker(false);
               }}
             >
-              <span className="text-gray-700 text-sm truncate">
+              <span className="text-gray-700 text-sm md:text-base">
                 {selectedDates?.pickupDate || 'Select Date'}
               </span>
-              <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
+              <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
             </div>
             {showPickupCalendar && (
-              <Calendar 
+              <Calendar
                 onDateSelect={(day) => handleDateSelect(day, 'pickupDate')}
                 onClose={() => setShowPickupCalendar(false)}
               />
             )}
           </div>
-          
-          <div className="flex-1 relative min-w-[120px]">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Drop-off Date</label>
-            <div 
-              className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-2 py-1.5 cursor-pointer hover:bg-gray-100"
-              onClick={() => {
-                setShowDropoffCalendar(!showDropoffCalendar);
-                setShowPickupCalendar(false);
-                setShowPickupTimePicker(false);
-                setShowDropoffTimePicker(false);
-              }}
-            >
-              <span className="text-gray-700 text-sm truncate">
-                {selectedDates?.dropoffDate || 'Select Date'}
-              </span>
-              <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
-            </div>
-            {showDropoffCalendar && (
-              <Calendar 
-                onDateSelect={(day) => handleDateSelect(day, 'dropoffDate')}
-                onClose={() => setShowDropoffCalendar(false)}
-              />
-            )}
-          </div>
-          
-          <div className="relative min-w-[80px]">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Pick-up Time</label>
-            <div 
-              className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-2 py-1.5 cursor-pointer hover:bg-gray-100"
+
+          <div className="flex-1 lg:flex-[0.8] relative">
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">Time</label> */}
+            <div
+              className="flex items-center justify-between bg-white border border-gray-300 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-100"
               onClick={() => {
                 setShowPickupTimePicker(!showPickupTimePicker);
                 setShowPickupCalendar(false);
@@ -482,23 +527,47 @@ const HeaderSearch = ({
                 setShowDropoffTimePicker(false);
               }}
             >
-              <span className="text-gray-700 text-sm truncate">
-                {selectedDates?.pickupTime || 'Time'}
+              <span className="text-gray-700">
+                {selectedDates?.pickupTime || 'Select Time'}
               </span>
-              <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
+              <ChevronDown className="w-4 h-4 text-gray-500" />
             </div>
             {showPickupTimePicker && (
-              <TimePicker 
+              <TimePicker
                 onTimeSelect={(time) => handleTimeSelect(time, 'pickupTime')}
                 onClose={() => setShowPickupTimePicker(false)}
               />
             )}
           </div>
-          
-          <div className="relative min-w-[80px]">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Drop-off Time</label>
-            <div 
-              className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-2 py-1.5 cursor-pointer hover:bg-gray-100"
+
+          <div className="flex-1 relative">
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">Drop-off Date</label> */}
+            <div
+              className="flex items-center justify-between bg-white border border-gray-300 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-100"
+              onClick={() => {
+                setShowDropoffCalendar(!showDropoffCalendar);
+                setShowPickupCalendar(false);
+                setShowPickupTimePicker(false);
+                setShowDropoffTimePicker(false);
+              }}
+            >
+              <span className="text-gray-700 text-sm md:text-base">
+                {selectedDates?.dropoffDate || 'Select Date'}
+              </span>
+              <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+            </div>
+            {showDropoffCalendar && (
+              <Calendar
+                onDateSelect={(day) => handleDateSelect(day, 'dropoffDate')}
+                onClose={() => setShowDropoffCalendar(false)}
+              />
+            )}
+          </div>
+
+          <div className="flex-1 lg:flex-[0.8] relative">
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">Time</label> */}
+            <div
+              className="flex items-center justify-between bg-white border border-gray-300 rounded-full px-3 py-2 cursor-pointer hover:bg-gray-100"
               onClick={() => {
                 setShowDropoffTimePicker(!showDropoffTimePicker);
                 setShowPickupCalendar(false);
@@ -506,132 +575,31 @@ const HeaderSearch = ({
                 setShowPickupTimePicker(false);
               }}
             >
-              <span className="text-gray-700 text-sm truncate">
-                {selectedDates?.dropoffTime || 'Time'}
+              <span className="text-gray-700">
+                {selectedDates?.dropoffTime || 'Select Time'}
               </span>
-              <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
+              <ChevronDown className="w-4 h-4 text-gray-500" />
             </div>
             {showDropoffTimePicker && (
-              <TimePicker 
+              <TimePicker
                 onTimeSelect={(time) => handleTimeSelect(time, 'dropoffTime')}
                 onClose={() => setShowDropoffTimePicker(false)}
               />
             )}
           </div>
-          
-          <div className="pt-5">
-            <button className="bg-[#0174b7] hover:bg-[#005f8c] text-white p-2 rounded-lg transition-colors duration-200">
-              <Search className="w-4 h-4" />
+
+          <div></div>
+          <div></div>
+          <div className='hidden xl:block'></div>
+          <div className="pt-6 lg:pt-0 lg:pl-2 flex items-end justify-end">
+            <button className="w-full lg:w-min bg-[#0174b7] hover:bg-[#005f8c] text-white p-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+              onClick={handleSearch}
+            >
+              <Search className="w-5 h-5" />
+              <span className='lg:hidden'>Search</span>
             </button>
           </div>
         </div>
-
-        {/* Desktop view */}
-<div className="hidden lg:flex items-end justify-center gap-3">
-  <div className="flex-1 min-w-[180px]">
-    <label className="block text-sm font-medium text-gray-700 mb-1">Pick-up Location</label>
-    <input
-      ref={pickupInputRef}
-      type="text"
-      className="w-full bg-gray-50 border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none"
-      placeholder="Enter pick-up location"
-      value={selectedLocation}
-      onChange={e => setSelectedLocation(e.target.value)}
-      autoComplete="off"
-    />
-  </div>
-  
-  <div className="flex-1 min-w-[180px]">
-    <label className="block text-sm font-medium text-gray-700 mb-1">Drop-off Location</label>
-    <input
-      ref={dropoffInputRef}
-      type="text"
-      className="w-full bg-gray-50 border border-gray-300 rounded px-3 py-2 text-gray-700 focus:outline-none"
-      placeholder="Enter drop-off location"
-      value={selectedDropoffLocation}
-      onChange={e => setSelectedDropoffLocation(e.target.value)}
-      autoComplete="off"
-    />
-  </div>
-  
-  <div className="flex-1 min-w-[140px]">
-    <label className="block text-sm font-medium text-gray-700 mb-1">Pick-up Date</label>
-    <div 
-      className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-      onClick={() => {
-        setShowPickupCalendar(!showPickupCalendar);
-        setShowDropoffCalendar(false);
-        setShowPickupTimePicker(false);
-        setShowDropoffTimePicker(false);
-      }}
-    >
-      <span className="text-gray-700 text-sm">
-        {selectedDates?.pickupDate || 'Select Date'}
-      </span>
-      <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-    </div>
-  </div>
-  
-  <div className="flex-1 min-w-[100px]">
-    <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-    <div 
-      className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-      onClick={() => {
-        setShowPickupTimePicker(!showPickupTimePicker);
-        setShowPickupCalendar(false);
-        setShowDropoffCalendar(false);
-        setShowDropoffTimePicker(false);
-      }}
-    >
-      <span className="text-gray-700 text-sm">
-        {selectedDates?.pickupTime || 'Select Time'}
-      </span>
-      <ChevronDown className="w-4 h-4 text-gray-500" />
-    </div>
-  </div>
-  
-  <div className="flex-1 min-w-[140px]">
-    <label className="block text-sm font-medium text-gray-700 mb-1">Drop-off Date</label>
-    <div 
-      className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-      onClick={() => {
-        setShowDropoffCalendar(!showDropoffCalendar);
-        setShowPickupCalendar(false);
-        setShowPickupTimePicker(false);
-        setShowDropoffTimePicker(false);
-      }}
-    >
-      <span className="text-gray-700 text-sm">
-        {selectedDates?.dropoffDate || 'Select Date'}
-      </span>
-      <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-    </div>
-  </div>
-  
-  <div className="flex-1 min-w-[100px]">
-    <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-    <div 
-      className="flex items-center justify-between bg-gray-50 border border-gray-300 rounded px-3 py-2 cursor-pointer hover:bg-gray-100"
-      onClick={() => {
-        setShowDropoffTimePicker(!showDropoffTimePicker);
-        setShowPickupCalendar(false);
-        setShowDropoffCalendar(false);
-        setShowPickupTimePicker(false);
-      }}
-    >
-      <span className="text-gray-700 text-sm">
-        {selectedDates?.dropoffTime || 'Select Time'}
-      </span>
-      <ChevronDown className="w-4 h-4 text-gray-500" />
-    </div>
-  </div>
-  
-  <div className="pt-1">
-    <button className="bg-[#0174b7] hover:bg-[#005f8c] text-white p-3 rounded-lg transition-colors duration-200 flex items-center justify-center">
-      <Search className="w-5 h-5" />
-    </button>
-  </div>
-</div>
       </div>
     </div>
   );

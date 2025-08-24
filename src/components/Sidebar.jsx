@@ -45,9 +45,9 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
       typeof externalSelectedLocation.lng === 'number'
     ) {
       const demo = toDemoCoords(externalSelectedLocation.lat, externalSelectedLocation.lng);
-      setSelectedLocation({ 
-        ...externalSelectedLocation, 
-        demoLat: demo.lat, 
+      setSelectedLocation({
+        ...externalSelectedLocation,
+        demoLat: demo.lat,
         demoLng: demo.lng,
         realLat: externalSelectedLocation.lat,
         realLng: externalSelectedLocation.lng
@@ -133,11 +133,10 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
   const FilterButton = ({ label, isSelected, onClick, icon: Icon }) => (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-        isSelected
-          ? 'bg-gray-900 text-white shadow-md'
-          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
-      }`}
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${isSelected
+        ? 'bg-gray-900 text-white shadow-md'
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+        }`}
     >
       {Icon && <Icon className="w-4 h-4" />}
       {label}
@@ -173,20 +172,20 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
   if (mobileOnly) {
     return (
       <>
-      <div className='bg-white border border-gray-300 rounded-md px-4 py-2 flex items-center gap-2 shadow-md'>
-        <button
-          className="lg:hidden bg-white border border-gray-300 rounded-full px-4 py-2 flex justify-center items-center gap-2 shadow-md"
-          onClick={() => setIsMobileSidebarOpen(true)}
-        >
-          {/* Use your filter icon here */}
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
-        </button>
-      </div>
+        <div className='bg-white border border-gray-300 rounded-md px-4 py-2 flex items-center gap-2 shadow-md'>
+          <button
+            className="lg:hidden bg-white border border-gray-300 rounded-full px-4 py-2 flex justify-center items-center gap-2 shadow-md"
+            onClick={() => setIsMobileSidebarOpen(true)}
+          >
+            {/* Use your filter icon here */}
+            <SlidersHorizontal className="w-4 h-4" />
+            Filters
+          </button>
+        </div>
         {/* Mobile sidebar overlay */}
         {isMobileSidebarOpen && (
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-end">
-            <div className="bg-white w-80 max-w-full h-full overflow-y-auto shadow-xl animate-slide-in-right relative">
+          <div className="fixed inset-0 z-50 bg-black/70 flex justify-end">
+            <div className="bg-white w-60 sm:w-80 lg:w-60 xl:w-80  max-w-full h-full overflow-y-auto shadow-xl animate-slide-in-right relative">
               <button
                 className="absolute top-4 right-4 text-gray-600 text-2xl"
                 onClick={() => setIsMobileSidebarOpen(false)}
@@ -203,7 +202,7 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                       <svg width="100%" height="100%">
                         <defs>
                           <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#3b82f6" strokeWidth="0.5"/>
+                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#3b82f6" strokeWidth="0.5" />
                           </pattern>
                         </defs>
                         <rect width="100%" height="100%" fill="url(#grid)" />
@@ -232,12 +231,11 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                           onClick={() => handleLocationClick(location)}
                         >
                           <div className={`relative ${isSelected ? 'animate-pulse' : ''}`}>
-                            <MapPin 
-                              className={`w-6 h-6 ${
-                                isSelected 
-                                  ? 'text-red-500 fill-red-500' 
-                                  : 'text-red-400 fill-red-400 hover:text-red-500 hover:fill-red-500'
-                              } drop-shadow-lg`}
+                            <MapPin
+                              className={`w-6 h-6 ${isSelected
+                                ? 'text-red-500 fill-red-500'
+                                : 'text-red-400 fill-red-400 hover:text-red-500 hover:fill-red-500'
+                                } drop-shadow-lg`}
                             />
                           </div>
                         </div>
@@ -259,7 +257,7 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                   </div>
 
                   {/* Show on Map Button */}
-                  <button 
+                  <button
                     onClick={openInGoogleMaps}
                     disabled={!selectedLocation}
                     className={`mt-3 w-full ${selectedLocation ? 'bg-[#0174b7] hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2`}
@@ -438,14 +436,14 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
     <>
       {/* Filters Button for mobile/tablet */}
       <button
-        className="block lg:hidden fixed top-4 right-4 z-40 bg-white border border-gray-300 rounded-full px-4 py-2 flex items-center gap-2 shadow-md"
+        className="lg:hidden fixed top-4 right-4 z-40 bg-white border border-gray-300 rounded-full px-4 py-2 flex items-center gap-2 shadow-md"
         onClick={() => setIsMobileSidebarOpen(true)}
       >
         <Settings className="w-5 h-5" />
         Filters
       </button>
       {/* Sidebar for desktop */}
-      <div className="hidden lg:block bg-white border-r border-gray-200 h-full overflow-y-auto w-80 ">
+      <div className="hidden lg:block bg-white border-r border-gray-200 h-full overflow-y-auto w-60 xl:w-80 ">
         {/* Map Section */}
         <div className="m-4 border-b border-gray-200">
           <div className="relative bg-blue-50 h-48 rounded-lg overflow-hidden" ref={mapRef}>
@@ -454,7 +452,7 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
               <svg width="100%" height="100%">
                 <defs>
                   <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#3b82f6" strokeWidth="0.5"/>
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#3b82f6" strokeWidth="0.5" />
                   </pattern>
                 </defs>
                 <rect width="100%" height="100%" fill="url(#grid)" />
@@ -483,12 +481,11 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                   onClick={() => handleLocationClick(location)}
                 >
                   <div className={`relative ${isSelected ? 'animate-pulse' : ''}`}>
-                    <MapPin 
-                      className={`w-6 h-6 ${
-                        isSelected 
-                          ? 'text-red-500 fill-red-500' 
-                          : 'text-red-400 fill-red-400 hover:text-red-500 hover:fill-red-500'
-                      } drop-shadow-lg`}
+                    <MapPin
+                      className={`w-6 h-6 ${isSelected
+                        ? 'text-red-500 fill-red-500'
+                        : 'text-red-400 fill-red-400 hover:text-red-500 hover:fill-red-500'
+                        } drop-shadow-lg`}
                     />
                   </div>
                 </div>
@@ -510,7 +507,7 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
           </div>
 
           {/* Show on Map Button */}
-          <button 
+          <button
             onClick={openInGoogleMaps}
             disabled={!selectedLocation}
             className={`mt-3 w-full ${selectedLocation ? 'bg-[#0174b7] hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2`}
@@ -680,8 +677,11 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
       </div>
       {/* Mobile/Tablet Sidebar Overlay */}
       {isMobileSidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-end">
-          <div className="bg-white w-80 max-w-full h-full overflow-y-auto shadow-xl animate-slide-in-right relative">
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/70 flex justify-end">
+          {/* <div className='w-full h-screen bg-black opacity-40'>
+
+          </div> */}
+          <div className="bg-white w-60 sm:w-80 lg:w-60 xl:w-80 max-w-full h-full overflow-y-auto shadow-xl animate-slide-in-right relative">
             {/* Close Button */}
             <button
               className="absolute top-4 right-4 text-gray-600 text-2xl"
@@ -700,7 +700,7 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                     <svg width="100%" height="100%">
                       <defs>
                         <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#3b82f6" strokeWidth="0.5"/>
+                          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#3b82f6" strokeWidth="0.5" />
                         </pattern>
                       </defs>
                       <rect width="100%" height="100%" fill="url(#grid)" />
@@ -729,12 +729,11 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                         onClick={() => handleLocationClick(location)}
                       >
                         <div className={`relative ${isSelected ? 'animate-pulse' : ''}`}>
-                          <MapPin 
-                            className={`w-6 h-6 ${
-                              isSelected 
-                                ? 'text-red-500 fill-red-500' 
-                                : 'text-red-400 fill-red-400 hover:text-red-500 hover:fill-red-500'
-                            } drop-shadow-lg`}
+                          <MapPin
+                            className={`w-6 h-6 ${isSelected
+                              ? 'text-red-500 fill-red-500'
+                              : 'text-red-400 fill-red-400 hover:text-red-500 hover:fill-red-500'
+                              } drop-shadow-lg`}
                           />
                         </div>
                       </div>
@@ -756,7 +755,7 @@ const CarRentalSidebar = ({ externalSelectedLocation, mobileOnly }) => {
                 </div>
 
                 {/* Show on Map Button */}
-                <button 
+                <button
                   onClick={openInGoogleMaps}
                   disabled={!selectedLocation}
                   className={`mt-3 w-full ${selectedLocation ? 'bg-[#0174b7] hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'} text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2`}

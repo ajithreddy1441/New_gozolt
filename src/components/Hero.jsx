@@ -215,7 +215,7 @@ const Hero = () => {
             </h1>
             <p className="mt-2 sm:mt-4 mb-4 text-lg sm:text-xl font-medium text-gray-800 text-center">
               <span className="pb-1 flex justify-center items-center gap-2 borser-gray-200">
-                Find Perfect Car To Drive 
+                Find Perfect Car To Drive
                 <Car className="w-6 h-6 ml-2" />
               </span>
             </p>
@@ -231,9 +231,9 @@ const Hero = () => {
           </div>
         </div>
         {/* SearchBar */}
-        <div className="relative lg:absolute lg:-bottom-10 lg:left-1/2 lg:transform lg:-translate-x-1/2 w-full max-w-5xl px-4 z-20 mx-auto">
-          <SearchBar 
-            onSearchStart={() => setIsLoading(true)} 
+        <div className="relative lg:absolute md:-bottom-20 lg:left-1/2 lg:transform lg:-translate-x-1/2 w-full max-w-5xl px-4 z-20 mx-auto">
+          <SearchBar
+            onSearchStart={() => setIsLoading(true)}
             onSearchComplete={() => setIsLoading(false)}
           />
         </div>
@@ -241,7 +241,7 @@ const Hero = () => {
 
       {/* Rest of your Hero component remains the same */}
       {/* Logos Row */}
-      <div className="bg-white py-6 mt-12 shadow-sm">
+      <div className="bg-white py-6 mt-10 md:mt-24 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 text-center">
           <p className="text-gray-500 text-sm mb-4">
             Trusted by over 50,000 Suppliers
@@ -395,7 +395,7 @@ const Hero = () => {
               <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight">
                 Be the first to know about our hottest deals and discounts
               </h2>
-              
+
               {/* Subscription Form */}
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -423,7 +423,7 @@ const Hero = () => {
                     )}
                   </button>
                 </div>
-                
+
                 <div className="flex items-start space-x-3">
                   <input
                     type="checkbox"
@@ -445,7 +445,7 @@ const Hero = () => {
 
             {/* Right Image */}
             <div className="relative md:flex md:justify-end">
-              <div className="relative overflow-hidden rounded-2xl md:ml-auto">            
+              <div className="relative overflow-hidden rounded-2xl md:ml-auto">
                 <img
                   src="/car-rect.png"
                   alt="Mountain road with cars"
@@ -462,26 +462,24 @@ const Hero = () => {
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12">Frequently Asked Questions (FAQ)</h2>
         {faqs.map((item, idx) => (
           <div key={idx} className="mb-6 border-b pb-4">
-            <div className="flex items-center">
+            <div className="flex items-center cursor-pointer">
               <span className="bg-[#0174B7] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4">
                 {String(idx + 1).padStart(2, "0")}
               </span>
-              <button
+              <p
                 className={`text-base sm:text-lg font-semibold flex-1 text-left`}
                 onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
               >
                 {item.question}
-              </button>
-              <span 
-                className="ml-2 cursor-pointer text-lg" 
+              </p>
+              <span
+                className={`ml-2 text-lg ${openIndex === idx ? "-rotate-180" : "rotate-0"} duration-300`}
                 onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
               >
-                {openIndex === idx ? '↓' : '→'}
+                <span>↓</span>
               </span>
             </div>
-            {openIndex === idx && (
-              <p className="mt-3 text-gray-600 text-sm sm:text-base">{item.answer}</p>
-            )}
+            <p className={`mt-3 text-gray-600 text-sm sm:text-base ${openIndex === idx ? "min-h-10" : "min-h-0"} h-0 overflow-hidden duration-300`}>{item.answer}</p>
           </div>
         ))}
       </section>
@@ -490,14 +488,14 @@ const Hero = () => {
       <footer className="bg-transparent text-white relative overflow-hidden">
         {/* Background image with overlay */}
         <div className="absolute inset-0">
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: "url('/Footer-section.png')"
             }}
           ></div>
         </div>
-        
+
         <div className="relative z-10 max-w-7xl mx-auto py-8 sm:py-12 px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-8">
             {/* Left Section */}
@@ -579,7 +577,7 @@ const Hero = () => {
           <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-800">
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
               <p className="text-gray-400 text-xs sm:text-sm">
-                © 2025 Primion. All Rights Reserved. 
+                © 2025 Primion. All Rights Reserved.
               </p>
               <div className="flex items-center space-x-4 sm:space-x-6">
                 <button
