@@ -307,16 +307,43 @@ const CarRentalBooking = () => {
 
   // Update your handleBookCar function
 const handleBookCar = async () => {
-  // Validate that we have all required data from searchParams
-  if (!searchParams?.location_id) {
-    alert("Location information is missing");
-    return;
+  // First check if we have location_id in searchParams
+  let locationId = searchParams?.location_id;
+  
+  // If not, try to get it from carDetail
+  if (!locationId && carDetail?.location?.id) {
+    locationId = carDetail.location.id;
+    console.log("Using location ID from carDetail:", locationId);
   }
   
-  if (!searchParams?.pickup_date || !searchParams?.return_date) {
-    alert("Date information is missing");
+  // If still no location ID, try to get it from the original carData
+  if (!locationId && carData?.location?.id) {
+    locationId = carData.location.id;
+    console.log("Using location ID from carData:", locationId);
+  }
+  
+  // If still no location ID, try to get it from vendor info
+  if (!locationId && carDetail?.vendor?.id) {
+    locationId = carDetail.vendor.id;
+    console.log("Using vendor ID as fallback location ID:", locationId);
+  }
+  
+  // If still no location ID, show detailed error
+  if (!locationId) {
+    alert("Location information is missing. Please try selecting the car again.");
+    console.error("Location ID missing from all sources:");
+    console.log("searchParams:", searchParams);
+    console.log("carDetail:", carDetail);
+    console.log("carData:", carData);
+    
+    // Add more detailed debugging
+    console.log("carDetail location:", carDetail?.location);
+    console.log("carData location:", carData?.location);
+    console.log("carDetail vendor:", carDetail?.vendor);
+    
     return;
   }
+
 
   // Format dates properly for the API (YYYY-MM-DD HH:MM format)
   const formatDateForAPI = (dateString) => {
@@ -335,11 +362,11 @@ const handleBookCar = async () => {
 
   const payload = {
     car_id: parseInt(carId), // Convert to integer
-    location_id: parseInt(searchParams.location_id), // Convert to integer
+    location_id: parseInt(locationId), // Use the locationId variable
     pickup_date: formatDateForAPI(searchParams.pickup_date),
     dropoff_date: formatDateForAPI(searchParams.return_date),
-    pickup_location: searchParams.location,
-    dropoff_location: searchParams.location, // Same as pickup
+    pickup_location: searchParams.location || carDetail?.location?.name || 'Unknown location',
+    dropoff_location: searchParams.location || carDetail?.location?.name || 'Unknown location',
     driver_age: driverDetails.dateOfBirth ? 
       Math.floor((new Date() - new Date(driverDetails.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) : null,
     country: driverDetails.country || null,
@@ -380,7 +407,7 @@ const handleBookCar = async () => {
           to_email: driverDetails.email,
           to_name: `${driverDetails.firstName} ${driverDetails.lastName}`,
           car_model: carDetail?.model_type || carDetail?.model || 'Car',
-          pickup_location: searchParams.location,
+          pickup_location: searchParams.location || carDetail?.location?.name || 'Unknown location',
           pickup_date: searchParams.pickup_date,
           return_date: searchParams.return_date,
           total_price: calculateTotal(),

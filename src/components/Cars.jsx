@@ -36,28 +36,44 @@ const Cars = ({ carsData = [], loading = false, searchParams = {} }) => {
       drive: apiCar.drive,
       steering: apiCar.steering,
       qty_vehicle: apiCar.qty_vehicle,
-      user_id: apiCar.user_id
+      user_id: apiCar.user_id,
+      location: apiCar.location
     };
   };
 
   const cars = carsData.map(transformCarData);
 
   const handleViewDeal = (car) => {
-    navigate('/addons', {
-      state: {
-        carId: car.id,
-        searchParams: {
-          location: searchParams.location || 'Malta International Airport',
-          pickup_date: searchParams.pickupDate,
-          return_date: searchParams.returnDate,
-          pickup_time: searchParams.pickupTime,
-          return_time: searchParams.returnTime,
-          days: calculateRentalDays(searchParams.pickupDate, searchParams.returnDate)
-        },
-        carData: car // Pass the full car data for immediate display
-      }
-    });
-  };
+  console.log("Car object being passed:", car);
+  console.log("Car location:", car.location);
+  console.log("Car location id:", car.location?.id);
+  console.log("Search params:", searchParams);
+
+  const locationId = car.location?.id || car.location_id || car.user_id;
+  
+  // Get location name with multiple fallbacks
+  const locationName = car.location?.name || car.location?.location || 'Unknown location';
+  
+  navigate('/addons', {
+    state: {
+      carId: car.id,
+      searchParams: {
+        location: locationName,
+        location_id: locationId,
+        pickup_date: searchParams.pickupDate || searchParams.pickup_date,
+        return_date: searchParams.returnDate || searchParams.return_date,
+        pickup_time: searchParams.pickupTime || searchParams.pickup_time,
+        return_time: searchParams.returnTime || searchParams.return_time,
+        days: calculateRentalDays(
+          searchParams.pickupDate || searchParams.pickup_date, 
+          searchParams.returnDate || searchParams.return_date
+        ),
+        price: car.price
+      },
+      carData: car
+    }
+  });
+};
 
   // Calculate rental days from dates
   const calculateRentalDays = (pickupDate, returnDate) => {
