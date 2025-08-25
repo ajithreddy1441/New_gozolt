@@ -75,11 +75,9 @@ const CarRentalBooking = () => {
       }
 
       if (!carId) return;
-      console.log('Fetching car details for ID:', carId);
       setCarLoading(true);
       setCarError(null);
       try {
-        console.log('Fetching car details for ID:', carId);
         const url = `https://api.rentnrides.com/api/get-car-detail/${carId}`;
 
         // Add headers to ensure proper content type handling
@@ -91,12 +89,9 @@ const CarRentalBooking = () => {
           }
         });
 
-        console.log('API Response status:', res.status);
-
         let data = null;
         try {
           data = await res.json();
-          console.log('API Response data:', data);
         } catch (jsonError) {
           console.error('JSON parsing error:', jsonError);
           throw new Error('Invalid JSON response from server');
@@ -289,12 +284,9 @@ const CarRentalBooking = () => {
     setShowVendorTerms(true);
     setVendorTermsLoading(true);
     try {
-      // DEBUG: Log carDetail to see its structure
-      console.log("carDetail for vendor terms:", carDetail);
 
       // Use the correct path based on your carDetail structure
       const vendorId = carDetail?.vendor?.id || carDetail?.vendor_id;
-      console.log("Using vendorId:", vendorId);
 
       if (!vendorId) throw new Error("No vendor ID found.");
       const res = await fetch(`https://api.rentnrides.com/api/get-vendor-terms/${vendorId}`);
@@ -314,33 +306,22 @@ const CarRentalBooking = () => {
     // If not, try to get it from carDetail
     if (!locationId && carDetail?.location?.id) {
       locationId = carDetail.location.id;
-      console.log("Using location ID from carDetail:", locationId);
     }
 
     // If still no location ID, try to get it from the original carData
     if (!locationId && carData?.location?.id) {
       locationId = carData.location.id;
-      console.log("Using location ID from carData:", locationId);
     }
 
     // If still no location ID, try to get it from vendor info
     if (!locationId && carDetail?.vendor?.id) {
       locationId = carDetail.vendor.id;
-      console.log("Using vendor ID as fallback location ID:", locationId);
     }
 
     // If still no location ID, show detailed error
     if (!locationId) {
       alert("Location information is missing. Please try selecting the car again.");
       console.error("Location ID missing from all sources:");
-      console.log("searchParams:", searchParams);
-      console.log("carDetail:", carDetail);
-      console.log("carData:", carData);
-
-      // Add more detailed debugging
-      console.log("carDetail location:", carDetail?.location);
-      console.log("carData location:", carData?.location);
-      console.log("carDetail vendor:", carDetail?.vendor);
 
       return;
     }
@@ -384,9 +365,6 @@ const CarRentalBooking = () => {
       total_price: calculateTotal(),
     };
 
-    // Log the payload for debugging
-    console.log("Booking payload:", JSON.stringify(payload, null, 2));
-
     try {
       const res = await fetch('https://api.rentnrides.com/api/book-car', {
         method: 'POST',
@@ -395,18 +373,13 @@ const CarRentalBooking = () => {
       });
 
       const data = await res.json();
-      console.log('Booking API response:', data);
 
       if (res.ok && data.success) {
         alert('Booking successful!');
 
-        console.log(searchParams, carDetail, driverDetails);
-        // Send email via EmailJS (simplified version)
-        emailjs.send(
-          'service_p3qxdg9',
-          'template_axb3od8',
-          {
-            to_email: driverDetails.email,
+        //prepare common email data
+        const commonEmailData = {
+          to_email: driverDetails.email,
             to_name: `${driverDetails.firstName} ${driverDetails.lastName}`,
             driver_first_name: driverDetails.firstName,
             driver_last_name: driverDetails.lastName,
@@ -430,8 +403,26 @@ const CarRentalBooking = () => {
             pickup_instructions: carDetail?.pickup_instructions || 'Please check with the rental desk for specific pickup instructions',
             fuel_policy: carDetail?.fuel_policy || 'Full-to-Full (Please return the car with the same fuel level as when picked up)',
             manage_booking_url: `https://rentnrides.com/manage-booking?ref=${data.reservation_no || data.data?.booking_id || ''}`,
+            manage_voucher_url: `https://rentnrides.com/manage-voucher?ref=${data.reservation_no || data.data?.booking_id || ''}`,
             help_center_url: 'https://rentnrides.com/help-center'
-          },
+        };
+
+        // Send email via EmailJS (simplified version)
+        emailjs.send(
+          'service_p3qxdg9',
+          'template_axb3od8',
+          commonEmailData,
+          'cphBYQUzdfIEB2wTF'
+        ).then(() => {
+          console.log('Email sent!');
+        }).catch((err) => {
+          console.error('EmailJS error:', err);
+        });
+
+        emailjs.send(
+          'service_p3qxdg9',
+          'template_h412f8h',
+          commonEmailData,
           'cphBYQUzdfIEB2wTF'
         ).then(() => {
           console.log('Email sent!');
